@@ -1,7 +1,11 @@
-from lexical_analysis import LexicalAnalysis
+from lexical_analysis import run_lexical_analysis
+
 
 while True:
-    text = input(">")
-    stream_of_tokens = LexicalAnalysis(text)
-    print(stream_of_tokens.__repr__())
+    text = input("> ")
+    result, error = run_lexical_analysis(text)
 
+    if error:
+        print(error.to_string())
+    else:
+        print(result)
