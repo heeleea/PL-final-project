@@ -2,6 +2,12 @@ from error import Position, IllegalCharError
 from token_utils import Token, TokenDigit, TokenPunctuations, TokenOperation
 
 
+def run_lexical_analysis(input):
+    lexer = LexicalAnalysis(input)
+    tokens, error = lexer.create_token_stream()
+
+    return tokens, error
+
 
 class LexicalAnalysis:
     def __init__(self, text):
@@ -44,8 +50,34 @@ class LexicalAnalysis:
                     self.proceed()
 
                 else:
-                    # TODO: raise illegal character exception
-                    pass
+                    start_position = self.char_position.get_position()
+                    char = self.current_char
+                    self.proceed()
+
+                    return [], IllegalCharError(error_details=f"'{char}'",
+                                                start_position=start_position,
+                                                end_position=self.char_position)
+
+        return tokens, None
 
     def detect_number_type(self):
-        pass
+        number_string = ''
+        dot_count = 0
+
+        while self.current_char is not None and self.current_char.isdigit() or self.current_char == '.':
+            if self.current_char == '.':
+                if dot_count == 1:
+                    break
+
+                dot_count += 1
+                number_string += '.'
+
+            else:
+                number_string += self.current_char
+
+            self.proceed()
+
+        if dot_count == 0:
+            return Token(TokenDigit.INT.name, int(number_string))
+
+        return Token(TokenDigit.FLOAT.name, float(number_string))

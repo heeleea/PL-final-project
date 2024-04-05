@@ -1,4 +1,5 @@
-from lexical_analysis import LexicalAnalysis
+from lexical_analysis import run_lexical_analysis
+
 
 while True:
     text = input("> ")
