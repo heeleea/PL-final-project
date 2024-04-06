@@ -1,4 +1,4 @@
-import copy
+from utils import print_error_with_arrows
 
 
 class Position:
@@ -39,5 +39,16 @@ class Error:
 
 
 class IllegalCharError(Error):
-    def __init__(self, error_details, start_position, end_position):
-        super().__init__('Illegal Character', error_details, start_position, end_position)
+    def __init__(self, details, start_position, end_position):
+        super().__init__(name='Illegal Character',
+                         details=details,
+                         start_position=start_position,
+                         end_position=end_position)
+
+
+class InvalidSyntaxError(Error):
+    def __init__(self, details, start_position, end_position):
+        super().__init__(name='Invalid Syntax',
+                         details=details,
+                         start_position=start_position,
+                         end_position=end_position)
