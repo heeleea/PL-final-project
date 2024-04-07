@@ -13,7 +13,7 @@ class BinaryOperationNode:
         self.right_node = right_node
 
     def __repr__(self):
-        return f"{self.left_node}, {self.operation}, {self.right_node}"
+        return f"({self.left_node}, {self.operation}, {self.right_node})"
 
 
 class UnaryOperationNode:
@@ -22,4 +22,4 @@ class UnaryOperationNode:
         self.node = node
 
     def __repr__(self):
-        return f"{self.operation}, {self.node}"
+        return f"({self.operation}, {self.node})"
