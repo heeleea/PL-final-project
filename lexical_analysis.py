@@ -1,18 +1,25 @@
 from error import Position, IllegalCharError
-from token_utils import Token, TokenDigit, TokenPunctuations, TokenOperation
+from parser import Parser
+from token_utils import Token, TokenDigit, TokenPunctuation, TokenOperation, TokenUtils
 
 
-def run_lexical_analysis(input):
-    lexer = LexicalAnalysis(input)
+def run_interperter(input, file_name):
+    lexer = LexicalAnalysis(input, file_name)
     tokens, error = lexer.create_token_stream()
+    if error:
+        return None, error
 
-    return tokens, error
+    parse = Parser(tokens)
+    ast = parse.create_ats()
+
+    return ast.node, ast.error
 
 
 class LexicalAnalysis:
-    def __init__(self, text):
+    def __init__(self, text, file_name):
         self.text = text
-        self.char_position = Position(index=-1, line=0, column=-1)
+        self.file_name = file_name
+        self.char_position = Position(index=-1, line=0, column=-1, file_text=self.text, file_name=self.file_name)
         self.current_char = None
         self.proceed()
 
@@ -25,8 +32,7 @@ class LexicalAnalysis:
 
         while self.current_char is not None:
             if self.current_char.isspace():
-                if self.current_char == '/n':
-                    self.proceed()
+                self.proceed()
 
             elif self.current_char.isdigit():
                 number = self.detect_number_type()
@@ -35,7 +41,7 @@ class LexicalAnalysis:
             else:
                 token_type = None
 
-                for enum_class in {TokenOperation, TokenPunctuations}:
+                for enum_class in {TokenOperation, TokenPunctuation}:
 
                     try:
                         token_type = enum_class(self.current_char)
@@ -46,7 +52,8 @@ class LexicalAnalysis:
                         continue
 
                 if token_type:
-                    tokens.append(Token(enum_class[token_type.name]))
+                    tokens.append(Token(token_type=enum_class[token_type.name].name,
+                                        start_position=self.char_position))
                     self.proceed()
 
                 else:
@@ -54,15 +61,18 @@ class LexicalAnalysis:
                     char = self.current_char
                     self.proceed()
 
-                    return [], IllegalCharError(error_details=f"'{char}'",
+                    return [], IllegalCharError(details=f"'{char}'",
                                                 start_position=start_position,
                                                 end_position=self.char_position)
 
+        tokens.append(Token(token_type=TokenUtils.END.name,
+                            start_position=self.char_position))
         return tokens, None
 
     def detect_number_type(self):
         number_string = ''
         dot_count = 0
+        start_position = self.char_position.get_position()
 
         while self.current_char is not None and self.current_char.isdigit() or self.current_char == '.':
             if self.current_char == '.':
@@ -78,6 +88,12 @@ class LexicalAnalysis:
             self.proceed()
 
         if dot_count == 0:
-            return Token(TokenDigit.INT.name, int(number_string))
+            return Token(token_type=TokenDigit.INT.name,
+                         value=int(number_string),
+                         start_position=start_position,
+                         end_position=self.char_position)
 
-        return Token(TokenDigit.FLOAT.name, float(number_string))
+        return Token(token_type=TokenDigit.FLOAT.name,
+                     value=float(number_string),
+                     start_position=start_position,
+                     end_position=self.char_position)
