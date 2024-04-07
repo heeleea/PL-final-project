@@ -3,7 +3,7 @@ from parser import Parser
 from token_utils import Token, TokenDigit, TokenPunctuation, TokenOperation, TokenUtils
 
 
-def run_interperter(input, file_name):
+def run(input, file_name):
     lexer = LexicalAnalysis(input, file_name)
     tokens, error = lexer.create_token_stream()
     if error:
