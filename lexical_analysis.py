@@ -1,6 +1,7 @@
 from error import Position, IllegalCharError
 from parser import Parser
 from token_utils import Token, TokenDigit, TokenPunctuation, TokenOperation, TokenUtils
+from semantical_analysis import SemanticalAnalysis
 
 
 def run(input, file_name):
@@ -11,8 +12,13 @@ def run(input, file_name):
 
     parse = Parser(tokens)
     ast = parse.create_ats()
+    if ast.error:
+        return None, ast.error
 
-    return ast.node, ast.error
+    semantical_analysis = SemanticalAnalysis()
+    semantical_analysis.transverse(ast.node)
+
+    return None, None
 
 
 class LexicalAnalysis:
