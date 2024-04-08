@@ -44,7 +44,7 @@ class SemanticalAnalysis:
         return result.set_position(node.start_position, node.end_position)
 
     def transverse_unary(self, node: UnaryOperationNode) -> Number:
-        number = self.transverse_binary(node.node)
+        number = self.transverse(node.node)
 
         if node.operation.token_type == TokenOperation.MINUS.name:
             number = number.multiplied_by(Number(-1))
