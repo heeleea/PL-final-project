@@ -1,6 +1,7 @@
-from token_utils import TokenDigit, TokenOperation, TokenPunctuation, TokenUtils
-from ast_nodes import NumberNode, BinaryOperationNode, UnaryOperationNode
 from error import InvalidSyntaxError
+from ast_nodes import NumberNode, BinaryOperationNode, UnaryOperationNode
+from token_utils import TokenDigit, TokenOperation, TokenPunctuation, TokenUtils
+
 
 NUMBER_TYPES = {TokenDigit.INT.value, TokenDigit.FLOAT.value}
 
