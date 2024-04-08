@@ -16,9 +16,9 @@ def run(input, file_name):
         return None, ast.error
 
     semantical_analysis = SemanticalAnalysis()
-    semantical_analysis.transverse(ast.node)
+    result = semantical_analysis.transverse(ast.node)
 
-    return None, None
+    return result, None
 
 
 class LexicalAnalysis:

@@ -1,4 +1,33 @@
-from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode
+from token_utils import TokenOperation
+from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, BasicPosition
+
+
+class Number(BasicPosition):
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+        # self.set_position()
+
+    def set_position(self, start_position=None, end_position=None):
+        self.start_position = start_position
+        self.end_position = end_position
+        return self
+
+    def added_to(self, other):
+        if isinstance(other, Number):
+            return Number(self.value + other.value)
+
+    def subbed_by(self, other):
+        if isinstance(other, Number):
+            return Number(self.value - other.value)
+
+    def multiplied_by(self, other):
+        if isinstance(other, Number):
+            return Number(self.value * other.value)
+
+    def divided_by(self, other):
+        if isinstance(other, Number):
+            return Number(self.value / other.value)
 
 
 class SemanticalAnalysis:
@@ -14,12 +43,15 @@ class SemanticalAnalysis:
         result = operation_method(right_operand)
         return result.set_position(node.start_position, node.end_position)
 
-    def transverse_unary(self, node: UnaryOperationNode):
-        print("unary node")
-        self.transverse_binary(node.node)
+    def transverse_unary(self, node: UnaryOperationNode) -> Number:
+        number = self.transverse_binary(node.node)
 
-    def transverse_number(self, node: NumberNode):
-        print("number node")
+        if node.operation.token_type == TokenOperation.MINUS.name:
+            number = number.multiplied_by(Number(-1))
+        return number
+
+    def transverse_number(self, node: NumberNode) -> Number:
+        return Number(node.token.value).set_position(node.start_position, node.end_position)
 
     def transverse_no_visit(self, node):
         pass
@@ -44,4 +76,5 @@ class SemanticalAnalysis:
 
         node_name = type(node).__name__
         return handlers.get(node_name, self.transverse_no_visit)
+
 
