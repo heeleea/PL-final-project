@@ -13,24 +13,48 @@ class Number(BasicPosition):
         self.end_position = end_position
         return self
 
-    def added_to(self, other):
-        if isinstance(other, Number):
-            return Number(self.value + other.value)
+    def added_to(self, new_number):
+        if isinstance(new_number, Number):
+            return Number(self.value + new_number.value), None
 
-    def subbed_by(self, other):
-        if isinstance(other, Number):
-            return Number(self.value - other.value)
+    def subbed_by(self, new_number):
+        if isinstance(new_number, Number):
+            return Number(self.value - new_number.value), None
 
-    def multiplied_by(self, other):
-        if isinstance(other, Number):
-            return Number(self.value * other.value)
+    def multiplied_by(self, new_number):
+        if isinstance(new_number, Number):
+            return Number(self.value * new_number.value), None
 
-    def divided_by(self, other):
-        if isinstance(other, Number):
-            return Number(self.value / other.value)
+    def divided_by(self, new_number):
+        if isinstance(new_number, Number):
+            if new_number.value == 0:
+                return None, RuntimeError(new_number.start_position, new_number.end_position, 'Division By Zero')
+
+        return Number(self.value / new_number.value), None
+
+
+class RuntimeValidator:
+    def __init__(self):
+        self.value = None
+        self.error = None
+
+    def register(self, result):
+        if result.error:
+            self.error = result.error
+
+        return result.value
+
+    def success(self, value):
+        self.value = value
+        return self
+
+    def failure(self, error):
+        self.error = error
+        return self
 
 
 class SemanticalAnalysis:
+
     def transverse(self, node):
         method = self.node_handler_factory(node)
         return method(node)
