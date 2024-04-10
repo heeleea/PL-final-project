@@ -59,23 +59,46 @@ class SemanticalAnalysis:
         method = self.node_handler_factory(node)
         return method(node)
 
-    def transverse_binary(self, node: BinaryOperationNode) -> Number:
-        left_operand = self.transverse(node.left_node)
-        right_operand = self.transverse(node.right_node)
+    def transverse_binary(self, node: BinaryOperationNode):
+        result = RuntimeValidator()
+        left_operand = result.register(self.transverse(node.left_node))
+
+        if result.error:
+            return result
+
+        right_operand = result.register(self.transverse(node.right_node))
+
+        if result.error:
+            return result
 
         operation_method = self.operation_handler_factory(node.operation.token_type, left_operand)
-        result = operation_method(right_operand)
+        result, error = operation_method(right_operand)
+
+        if error:
+            return result.failure(error)
+
         return result.set_position(node.start_position, node.end_position)
 
-    def transverse_unary(self, node: UnaryOperationNode) -> Number:
-        number = self.transverse(node.node)
+    def transverse_unary(self, node: UnaryOperationNode):
+        result = RuntimeValidator()
+        number = result.register(self.transverse(node.node))
+
+        if result.error:
+            return result
+
+        error = None
 
         if node.operation.token_type == TokenOperation.MINUS.name:
             number = number.multiplied_by(Number(-1))
-        return number
 
-    def transverse_number(self, node: NumberNode) -> Number:
-        return Number(node.token.value).set_position(node.start_position, node.end_position)
+        if error:
+            return result.failure(error)
+
+        return result.success(number)
+
+    def transverse_number(self, node: NumberNode):
+        number = Number(node.token.value).set_position(node.start_position, node.end_position)
+        return RuntimeValidator().success(number)
 
     def transverse_no_visit(self, node):
         pass

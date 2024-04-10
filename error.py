@@ -52,3 +52,11 @@ class InvalidSyntaxError(Error):
                          details=details,
                          start_position=start_position,
                          end_position=end_position)
+
+
+class RunTimeError(Error):
+    def __init__(self, details, start_position, end_position):
+        super().__init__(name='Runtime Error',
+                         details=details,
+                         start_position=start_position,
+                         end_position=end_position)
