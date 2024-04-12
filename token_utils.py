@@ -8,6 +8,7 @@ class TokenOperation(Enum):
     MINUS = '-'
     DIVIDE = '/'
     MULTIPLY = '*'
+    EQUALS = '='
 
     def __str__(self):
         return self.name
@@ -25,6 +26,10 @@ class TokenDigit(Enum):
     FLOAT = 'FLOAT'
     INT = 'INT'
 
+
+class TokenInWords(Enum):
+    IDENTIFIER = 'IDENTIFIER'
+    KEYWORD = 'KEYWORDS'
 
 
 class TokenUtils(Enum):
