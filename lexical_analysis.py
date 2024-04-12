@@ -1,6 +1,6 @@
 from error import Position, IllegalCharError
 from parser import Parser
-from token_utils import Token, TokenDigit, TokenPunctuation, TokenOperation, TokenUtils
+from token_utils import Token, TokenDigit, TokenPunctuation, TokenOperation, TokenUtils, TokenInWords, KEYWORDS
 from semantical_analysis import SemanticalAnalysis
 from context import Context
 
@@ -45,6 +45,10 @@ class LexicalAnalysis:
             elif self.current_char.isdigit():
                 number = self.detect_number_type()
                 tokens.append(number)
+
+            elif self.current_char.isalnum():
+                variable = self.detect_identifier()
+                tokens.append(variable)
 
             else:
                 token_type = None
@@ -96,12 +100,23 @@ class LexicalAnalysis:
             self.proceed()
 
         if dot_count == 0:
-            return Token(token_type=TokenDigit.INT.name,
-                         value=int(number_string),
-                         start_position=start_position,
-                         end_position=self.char_position)
+            self.token = Token(token_type=TokenDigit.INT.name, value=int(number_string), start_position=start_position,
+                               end_position=self.char_position)
+            return self.token
 
         return Token(token_type=TokenDigit.FLOAT.name,
                      value=float(number_string),
                      start_position=start_position,
                      end_position=self.char_position)
+
+    def detect_identifier(self):
+        identifier_str = ''
+        start_position = self.char_position.get_position()
+
+        while self.current_char is not None and (self.current_char.isalnum() or self.current_char == '_'):
+            identifier_str += self.current_char
+            self.proceed()
+
+        token_type = TokenInWords.KEYWORD.name if identifier_str in KEYWORDS else TokenInWords.IDENTIFIER.name
+        return Token(token_type, identifier_str, start_position, self.char_position)
+

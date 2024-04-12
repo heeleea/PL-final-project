@@ -73,7 +73,7 @@ class Parser:
                                                      self.current_token.start_position,
                                                      self.current_token.end_position))
 
-        return result.failure(InvalidSyntaxError(f"Expected {TokenDigit.INT.value} or {TokenDigit.FLOAT.value}",
+        return result.failure(InvalidSyntaxError(f"Expected {TokenDigit.INT.value}, {TokenDigit.FLOAT.value}, {TokenOperation.PLUS.value}, {TokenOperation.MINUS.value} or {TokenPunctuation.LEFT_PARENTHESIS.value}",
                                                  token.start_position, token.end_position))
 
     def binary_operation(self, func, operations):

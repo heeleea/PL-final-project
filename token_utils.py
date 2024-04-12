@@ -1,5 +1,7 @@
 from enum import Enum
 
+KEYWORDS = ['VAR']
+
 
 class TokenOperation(Enum):
     PLUS = '+'
@@ -22,6 +24,7 @@ class TokenPunctuation(Enum):
 class TokenDigit(Enum):
     FLOAT = 'FLOAT'
     INT = 'INT'
+
 
 
 class TokenUtils(Enum):
