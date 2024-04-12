@@ -2,6 +2,7 @@ from error import Position, IllegalCharError
 from parser import Parser
 from token_utils import Token, TokenDigit, TokenPunctuation, TokenOperation, TokenUtils
 from semantical_analysis import SemanticalAnalysis
+from context import Context
 
 
 def run(input, file_name):
@@ -16,7 +17,8 @@ def run(input, file_name):
         return None, ast.error
 
     semantical_analysis = SemanticalAnalysis()
-    result = semantical_analysis.transverse(ast.node)
+    context = Context('<program>')
+    result = semantical_analysis.transverse(ast.node, context)
 
     return result.value, result.error
 

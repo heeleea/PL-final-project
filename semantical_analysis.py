@@ -9,11 +9,17 @@ class Number(BasicPosition):
     def __init__(self, value):
         super().__init__()
         self.value = value
+        self.context = None
+        self.set_context()
         # self.set_position()
 
     def set_position(self, start_position=None, end_position=None):
         self.start_position = start_position
         self.end_position = end_position
+        return self
+
+    def set_context(self, context=None):
+        self.context = context
         return self
 
     def added_to(self, new_number):
@@ -66,9 +72,9 @@ class RuntimeValidator:
 
 class SemanticalAnalysis:
 
-    def transverse(self, node):
+    def transverse(self, node: Union[BinaryOperationNode, NumberNode, UnaryOperationNode], context):
         method = self.node_handler_factory(node)
-        return method(node)
+        return method(node, context)
 
     def transverse_binary(self, node: BinaryOperationNode, context):
         validator = RuntimeValidator()
@@ -91,9 +97,9 @@ class SemanticalAnalysis:
         result = result.set_position(node.start_position, node.end_position)
         return validator.success(result)
 
-    def transverse_unary(self, node: UnaryOperationNode):
+    def transverse_unary(self, node: UnaryOperationNode, context):
         result = RuntimeValidator()
-        number = result.register(self.transverse(node.node))
+        number = result.register(self.transverse(node.node, context))
 
         if result.error:
             return result
@@ -108,11 +114,13 @@ class SemanticalAnalysis:
 
         return result.success(number)
 
-    def transverse_number(self, node: NumberNode):
-        number = Number(node.token.value).set_position(node.start_position, node.end_position)
+    def transverse_number(self, node: NumberNode, context):
+        number = Number(node.token.value)
+        number.set_context(context)
+        number.set_position(node.start_position, node.end_position)
         return RuntimeValidator().success(number)
 
-    def transverse_no_visit(self, node):
+    def transverse_no_visit(self, node, context):
         pass
 
     @staticmethod
