@@ -68,10 +68,10 @@ class Parser:
             if self.current_token.token_type in EXPRESSION_CLOSERS_NAMES:
                 result.register(self.advance())
                 return result.success(expression)
-            else:
-                return result.failure(InvalidSyntaxError(f"Expected {TokenPunctuation.RIGHT_PARENTHESIS.value}",
-                                                         self.current_token.start_position,
-                                                         self.current_token.end_position))
+
+            return result.failure(InvalidSyntaxError(f"Expected {TokenPunctuation.RIGHT_PARENTHESIS.value}",
+                                                     self.current_token.start_position,
+                                                     self.current_token.end_position))
 
         return result.failure(InvalidSyntaxError(f"Expected {TokenDigit.INT.value} or {TokenDigit.FLOAT.value}",
                                                  token.start_position, token.end_position))

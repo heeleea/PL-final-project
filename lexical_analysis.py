@@ -80,7 +80,7 @@ class LexicalAnalysis:
         dot_count = 0
         start_position = self.char_position.get_position()
 
-        while self.current_char is not None and self.current_char.isdigit() or self.current_char == '.':
+        while self.current_char is not None and (self.current_char.isdigit() or self.current_char == '.'):
             if self.current_char == '.':
                 if dot_count == 1:
                     break

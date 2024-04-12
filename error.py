@@ -54,9 +54,29 @@ class InvalidSyntaxError(Error):
                          end_position=end_position)
 
 
-class RunTimeError(Error):
-    def __init__(self, details, start_position, end_position):
+class CostumedRunTimeError(Error):
+    def __init__(self, details, start_position, end_position, context):
         super().__init__(name='Runtime Error',
                          details=details,
                          start_position=start_position,
                          end_position=end_position)
+        self.context = context
+
+    def to_string(self):
+        result = self.generate_traceback()
+        result += f"  Error: {self.name}: {self.details}\n"
+        add_arrows = print_error_with_arrows(self.start_position.file_text, self.start_position, self.end_position)
+        result += f"\n\n{add_arrows}"
+        return result
+
+    def generate_traceback(self):
+        result = ''
+        position = self.start_position
+        context = self.context
+
+        while context:
+            result = f"  File {self.start_position.file_name}, line {str(position.line + 1)}, in {context.display_name}\n{result}"
+            position = context.parent_entry_position
+            context = context.parent
+
+        return f"Traceback (most recent call last):\n{result}"

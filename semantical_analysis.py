@@ -1,5 +1,8 @@
+from typing import Union
 from token_utils import TokenOperation
 from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, BasicPosition
+from error import CostumedRunTimeError
+from context import Context
 
 
 class Number(BasicPosition):
@@ -15,22 +18,30 @@ class Number(BasicPosition):
 
     def added_to(self, new_number):
         if isinstance(new_number, Number):
-            return Number(self.value + new_number.value), None
+            number = Number(self.value + new_number.value)
+            number.set_context(self.context)
+            return number, None
 
     def subbed_by(self, new_number):
         if isinstance(new_number, Number):
-            return Number(self.value - new_number.value), None
+            number = Number(self.value - new_number.value)
+            number.set_context(self.context)
+            return number, None
 
     def multiplied_by(self, new_number):
         if isinstance(new_number, Number):
-            return Number(self.value * new_number.value), None
+            number = Number(self.value * new_number.value)
+            number.set_context(self.context)
+            return number, None
 
     def divided_by(self, new_number):
         if isinstance(new_number, Number):
             if new_number.value == 0:
-                return None, RuntimeError(new_number.start_position, new_number.end_position, 'Division By Zero')
+                return None, CostumedRunTimeError('Division By Zero', new_number.start_position, new_number.end_position, self.context)
 
-        return Number(self.value / new_number.value), None
+        number = Number(self.value / new_number.value)
+        number.set_context(self.context)
+        return number, None
 
 
 class RuntimeValidator:
@@ -59,25 +70,26 @@ class SemanticalAnalysis:
         method = self.node_handler_factory(node)
         return method(node)
 
-    def transverse_binary(self, node: BinaryOperationNode):
-        result = RuntimeValidator()
-        left_operand = result.register(self.transverse(node.left_node))
+    def transverse_binary(self, node: BinaryOperationNode, context):
+        validator = RuntimeValidator()
+        left_operand = validator.register(self.transverse(node.left_node, context))
 
-        if result.error:
-            return result
+        if validator.error:
+            return validator
 
-        right_operand = result.register(self.transverse(node.right_node))
+        right_operand = validator.register(self.transverse(node.right_node, context))
 
-        if result.error:
-            return result
+        if validator.error:
+            return validator
 
         operation_method = self.operation_handler_factory(node.operation.token_type, left_operand)
         result, error = operation_method(right_operand)
 
         if error:
-            return result.failure(error)
+            return validator.failure(error)
 
-        return result.set_position(node.start_position, node.end_position)
+        result = result.set_position(node.start_position, node.end_position)
+        return validator.success(result)
 
     def transverse_unary(self, node: UnaryOperationNode):
         result = RuntimeValidator()

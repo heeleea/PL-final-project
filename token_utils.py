@@ -12,8 +12,8 @@ class TokenOperation(Enum):
 
 
 class TokenPunctuation(Enum):
-    RIGHT_PARENTHESIS = '('
-    LEFT_PARENTHESIS = ')'
+    LEFT_PARENTHESIS = '('
+    RIGHT_PARENTHESIS = ')'
 
     def __str__(self):
         return self.name
@@ -42,7 +42,9 @@ class Token:
             self.end_position = end_position
 
     def __repr__(self):
-        if not self.value:
-            return f"{self.token_type}"
+        if self.value or self.value == 0:
+            return f'{self.token_type}:{self.value}'
 
-        return f"{self.token_type}:{self.value}"
+        return f'{self.token_type}'
+
+
