@@ -1,5 +1,5 @@
 from typing import Union
-from token_utils import Operation
+from token_utils import ArithmeticOperator, ComparisonOperator, InWords
 from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, BasicPosition, VariableAccessNode, VariableAssignNode
 from error import CostumedRunTimeError
 
@@ -45,6 +45,56 @@ class Number(BasicPosition):
                 return None, CostumedRunTimeError('Division By Zero', new_number.start_position, new_number.end_position, self.context)
 
         number = Number(self.value / new_number.value)
+        number.set_context(self.context)
+        return number, None
+
+    def get_comparison(self, new_number, operator):
+        operations = {
+            '==': lambda x, y: int(x == y),
+            '!=': lambda x, y: int(x != y),
+            '<': lambda x, y: int(x < y),
+            '>': lambda x, y: int(x > y),
+            '<=': lambda x, y: int(x <= y),
+            '>=': lambda x, y: int(x >= y),
+            'AND': lambda x, y: int(x and y),
+            'OR': lambda x, y: int(x or y)
+        }
+
+        if isinstance(new_number, Number):
+            operation = operations.get(operator) or operator
+            if operation:
+                result = operation(self.value, new_number.value)
+                number = Number(result)
+                number.set_context(self.context)
+                return number, None
+
+    def equals(self, new_number):
+        return self.get_comparison(new_number, ComparisonOperator.COMPARISON.value)
+
+    def not_equals(self, new_number):
+        return self.get_comparison(new_number, ComparisonOperator.NOT_EQUALS.value)
+
+    def less_than(self, new_number):
+        return self.get_comparison(new_number, ComparisonOperator.LESS_THAN.value)
+
+    def greater_than(self, new_number):
+        return self.get_comparison(new_number, ComparisonOperator.GREATER_THAN.value)
+
+    def less_than_equals(self, new_number):
+        return self.get_comparison(new_number, ComparisonOperator.LESS_THAN_EQUALS.value)
+
+    def greater_than_equals(self, new_number):
+        return self.get_comparison(new_number, ComparisonOperator.GREATER_THAN_EQUALS.value)
+
+    def logical_and(self, new_number):
+        return self.get_comparison(new_number, ComparisonOperator.AND.value)
+
+    def logical_or(self, new_number):
+        return self.get_comparison(new_number, ComparisonOperator.OR.value)
+
+    def logical_not(self):
+        comparison_result = 1 if self.value == 0 else 0
+        number = Number(comparison_result)
         number.set_context(self.context)
         return number, None
 
@@ -121,7 +171,7 @@ class SemanticalAnalysis:
         if validator.error:
             return validator
 
-        operation_method = self.operation_handler_factory(node.operation.type, left_operand)
+        operation_method = self.operator_handler_factory(node.operation.type, left_operand)
         result, error = operation_method(right_operand)
 
         if error:
@@ -139,8 +189,11 @@ class SemanticalAnalysis:
 
         error = None
 
-        if node.operation.type == Operation.MINUS.name:
+        if node.operation.type == ArithmeticOperator.MINUS.name:
             number = number.multiplied_by(Number(-1))
+
+        elif node.operation.matches(InWords.KEYWORDS.name, 'NOT'):
+            number, error = number.logical_not()
 
         if error:
             return result.failure(error)
@@ -158,15 +211,24 @@ class SemanticalAnalysis:
         pass
 
     @staticmethod
-    def operation_handler_factory(token_type, node):
-        operations = {
-            Operation.PLUS.name: node.added_to,
-            Operation.MINUS.name: node.subbed_by,
-            Operation.MULTIPLY.name: node.multiplied_by,
-            Operation.DIVIDE.name: node.divided_by
+    def operator_handler_factory(token_type, node):
+        operators = {
+            ArithmeticOperator.PLUS.name: node.added_to,
+            ArithmeticOperator.MINUS.name: node.subbed_by,
+            ArithmeticOperator.MULTIPLY.name: node.multiplied_by,
+            ArithmeticOperator.DIVIDE.name: node.divided_by,
+            ComparisonOperator.COMPARISON.name: node.equals,
+            ComparisonOperator.NOT_EQUALS.name: node.not_equals,
+            ComparisonOperator.LESS_THAN.name: node.less_than,
+            ComparisonOperator.GREATER_THAN: node.greater_than,
+            ComparisonOperator.LESS_THAN_EQUALS: node.less_than_equals,
+            ComparisonOperator.GREATER_THAN_EQUALS: node.greater_than_equals,
+            ComparisonOperator.AND.name: node.logical_and,
+            ComparisonOperator.OR.name: node.logical_or,
+            # ComparisonOperator.NOT.name: node.logical_not
         }
 
-        return operations.get(token_type)
+        return operators.get(token_type)
 
     def node_handler_factory(self, node):
         handlers = {

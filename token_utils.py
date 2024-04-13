@@ -3,7 +3,7 @@ from enum import Enum
 KEYWORDS = ['VAR', 'AND', 'OR', 'NOT']
 
 
-class Operation(Enum):
+class ArithmeticOperator(Enum):
     PLUS = '+'
     MINUS = '-'
     DIVIDE = '/'
@@ -14,13 +14,24 @@ class Operation(Enum):
         return self.name
 
 
-class Operators(Enum):
+class OperatorPrefix(Enum):
+    EQUALS = "="
+    NOT_EQUALS = "!"
+    LESS_THAN = "<"
+    GREATER_THAN = ">"
+
+
+class ComparisonOperator(Enum):
+    EQUALS = '='
     COMPARISON = '=='
     NOT_EQUALS = "!="
-    LOWER_THAN = "<"
+    LESS_THAN = "<"
     GREATER_THAN = ">"
-    LOWER_THAN_EQUALS = ">="
+    LESS_THAN_EQUALS = ">="
     GREATER_THAN_EQUALS = "<="
+    NOT = "NOT"
+    OR = "OR"
+    AND = "AND"
 
 
 class Punctuation(Enum):
@@ -38,7 +49,7 @@ class Digit(Enum):
 
 class InWords(Enum):
     IDENTIFIER = 'IDENTIFIER'
-    KEYWORD = 'KEYWORDS'
+    KEYWORDS = 'KEYWORDS'
     VAR = 'VAR'
     AND = 'AND'
     OR = 'OR'
