@@ -34,7 +34,7 @@ class LexicalAnalysis:
 
             elif self.current_char in OPERATOR_PREFIXES:
                 operator = OperatorPrefix(self.current_char)
-                self.proceed()
+                #self.proceed()
                 method = self.operators_handlers_factory(operator)
                 token = method()
                 tokens.append(token)

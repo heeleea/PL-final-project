@@ -220,12 +220,11 @@ class SemanticalAnalysis:
             ComparisonOperator.COMPARISON.name: node.equals,
             ComparisonOperator.NOT_EQUALS.name: node.not_equals,
             ComparisonOperator.LESS_THAN.name: node.less_than,
-            ComparisonOperator.GREATER_THAN: node.greater_than,
-            ComparisonOperator.LESS_THAN_EQUALS: node.less_than_equals,
-            ComparisonOperator.GREATER_THAN_EQUALS: node.greater_than_equals,
+            ComparisonOperator.GREATER_THAN.name: node.greater_than,
+            ComparisonOperator.LESS_THAN_EQUALS.name: node.less_than_equals,
+            ComparisonOperator.GREATER_THAN_EQUALS.name: node.greater_than_equals,
             ComparisonOperator.AND.name: node.logical_and,
-            ComparisonOperator.OR.name: node.logical_or,
-            # ComparisonOperator.NOT.name: node.logical_not
+            ComparisonOperator.OR.name: node.logical_or
         }
 
         return operators.get(token_type)
