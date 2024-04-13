@@ -46,6 +46,14 @@ class IllegalCharError(Error):
                          end_position=end_position)
 
 
+class ExpectedCharError(Error):
+    def __init__(self, details, start_position, end_position):
+        super().__init__(name='Expected Character',
+                         details=details,
+                         start_position=start_position,
+                         end_position=end_position)
+
+
 class InvalidSyntaxError(Error):
     def __init__(self, details, start_position, end_position):
         super().__init__(name='Invalid Syntax',

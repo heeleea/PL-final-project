@@ -89,8 +89,8 @@ class Parser:
             error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
             return result.failure(error)
 
-        error_message = f"Expected {Digit.INT.value}, {Digit.FLOAT.value}, {InWords.IDENTIFIER.name}, {Operation.PLUS.value}, {Operation.MINUS.value} or {Punctuation.LEFT_PARENTHESIS.value}"
-        error = InvalidSyntaxError(error_message, token.start_position, token.end_position)
+        error_message = f"Expected {Digit.INT.value}, {Digit.FLOAT.value}, {InWords.IDENTIFIER.name}, {ArithmeticOperator.PLUS.value}, {ArithmeticOperator.MINUS.value} or {Punctuation.LEFT_PARENTHESIS.value}"
+        error = InvalidSyntaxError(error_message, token.start_position, token.end_position) #end = self.current_token.end_position
         return result.failure(error)
 
     def binary_operation(self, func_a, operations, func_b=None):
