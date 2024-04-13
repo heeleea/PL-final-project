@@ -2,7 +2,6 @@ from typing import Union
 from token_utils import Operation
 from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, BasicPosition, VariableAccessNode, VariableAssignNode
 from error import CostumedRunTimeError
-from context import Context
 
 
 class Number(BasicPosition):
@@ -49,6 +48,15 @@ class Number(BasicPosition):
         number.set_context(self.context)
         return number, None
 
+    def get_copy(self):
+        copy = Number(self.value)
+        copy.set_position(self.start_position, self.end_position)
+        copy.set_context(self.context)
+        return copy
+
+    def __repr__(self):
+        return str(self.value)
+
 
 class RuntimeValidator:
     def __init__(self):
@@ -76,15 +84,18 @@ class SemanticalAnalysis:
         method = self.node_handler_factory(node)
         return method(node, context)
 
-    def transverse_variable_access_node(self, node: VariableAccessNode, context):
+    @staticmethod
+    def transverse_variable_access_node(node: VariableAccessNode, context):
         validator = RuntimeValidator()
         variable_name = node.token.value
         value = context.symbol_table.get(variable_name)
 
         if not value:
-            error = CostumedRunTimeError(node.start_position,node.end_position, f"'{variable_name}' is not defined", context)
+            error = CostumedRunTimeError(f"'{variable_name}' is not defined", node.start_position, node.end_position, context)
             return validator.failure(error)
 
+        value = value.get_copy()
+        value.set_position(node.start_position, node.end_position)
         return validator.success(value)
 
     def transverse_variable_assign_node(self, node, context):
@@ -136,13 +147,14 @@ class SemanticalAnalysis:
 
         return result.success(number)
 
-    def transverse_number(self, node: NumberNode, context):
+    @staticmethod
+    def transverse_number(node: NumberNode, context):
         number = Number(node.token.value)
         number.set_context(context)
         number.set_position(node.start_position, node.end_position)
         return RuntimeValidator().success(number)
 
-    def transverse_no_visit(self, node, context):
+    def transverse_error(self, node, context):
         pass
 
     @staticmethod
@@ -166,6 +178,6 @@ class SemanticalAnalysis:
         }
 
         node_name = type(node).__name__
-        return handlers.get(node_name, self.transverse_no_visit)
+        return handlers.get(node_name, self.transverse_error)
 
 

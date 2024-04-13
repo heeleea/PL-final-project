@@ -1,6 +1,6 @@
 from enum import Enum
 
-KEYWORDS = ['VAR']
+KEYWORDS = ['VAR', 'AND', 'OR', 'NOT']
 
 
 class Operation(Enum):
@@ -12,6 +12,15 @@ class Operation(Enum):
 
     def __str__(self):
         return self.name
+
+
+class Operators(Enum):
+    COMPARISON = '=='
+    NOT_EQUALS = "!="
+    LOWER_THAN = "<"
+    GREATER_THAN = ">"
+    LOWER_THAN_EQUALS = ">="
+    GREATER_THAN_EQUALS = "<="
 
 
 class Punctuation(Enum):
@@ -30,6 +39,10 @@ class Digit(Enum):
 class InWords(Enum):
     IDENTIFIER = 'IDENTIFIER'
     KEYWORD = 'KEYWORDS'
+    VAR = 'VAR'
+    AND = 'AND'
+    OR = 'OR'
+    NOT = 'NOT'
 
 
 class Utils(Enum):

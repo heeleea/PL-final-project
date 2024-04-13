@@ -1,8 +1,5 @@
 from error import Position, IllegalCharError
-from parser import Parser
 from token_utils import Token, Digit, Punctuation, Operation, Utils, InWords, KEYWORDS
-from semantical_analysis import SemanticalAnalysis
-from context import Context
 
 
 class LexicalAnalysis:
