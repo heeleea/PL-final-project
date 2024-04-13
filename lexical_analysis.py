@@ -1,26 +1,8 @@
 from error import Position, IllegalCharError
 from parser import Parser
-from token_utils import Token, TokenDigit, TokenPunctuation, TokenOperation, TokenUtils, TokenInWords, KEYWORDS
+from token_utils import Token, Digit, Punctuation, Operation, Utils, InWords, KEYWORDS
 from semantical_analysis import SemanticalAnalysis
 from context import Context
-
-
-def run(input, file_name):
-    lexer = LexicalAnalysis(input, file_name)
-    tokens, error = lexer.create_token_stream()
-    if error:
-        return None, error
-
-    parse = Parser(tokens)
-    ast = parse.create_ats()
-    if ast.error:
-        return None, ast.error
-
-    semantical_analysis = SemanticalAnalysis()
-    context = Context('<program>')
-    result = semantical_analysis.transverse(ast.node, context)
-
-    return result.value, result.error
 
 
 class LexicalAnalysis:
@@ -53,7 +35,7 @@ class LexicalAnalysis:
             else:
                 token_type = None
 
-                for enum_class in {TokenOperation, TokenPunctuation}:
+                for enum_class in {Operation, Punctuation}:
 
                     try:
                         token_type = enum_class(self.current_char)
@@ -64,8 +46,8 @@ class LexicalAnalysis:
                         continue
 
                 if token_type:
-                    tokens.append(Token(token_type=enum_class[token_type.name].name,
-                                        start_position=self.char_position))
+                    token = Token(token_type=enum_class[token_type.name].name, start_position=self.char_position)
+                    tokens.append(token)
                     self.proceed()
 
                 else:
@@ -73,12 +55,10 @@ class LexicalAnalysis:
                     char = self.current_char
                     self.proceed()
 
-                    return [], IllegalCharError(details=f"'{char}'",
-                                                start_position=start_position,
-                                                end_position=self.char_position)
+                    return [], IllegalCharError(details=f"'{char}'", start_position=start_position, end_position=self.char_position)
 
-        tokens.append(Token(token_type=TokenUtils.END.name,
-                            start_position=self.char_position))
+        token = Token(token_type=Utils.END.name, start_position=self.char_position)
+        tokens.append(token)
         return tokens, None
 
     def detect_number_type(self):
@@ -100,14 +80,9 @@ class LexicalAnalysis:
             self.proceed()
 
         if dot_count == 0:
-            self.token = Token(token_type=TokenDigit.INT.name, value=int(number_string), start_position=start_position,
-                               end_position=self.char_position)
-            return self.token
+            return Token(token_type=Digit.INT.name, value=int(number_string), start_position=start_position, end_position=self.char_position)
 
-        return Token(token_type=TokenDigit.FLOAT.name,
-                     value=float(number_string),
-                     start_position=start_position,
-                     end_position=self.char_position)
+        return Token(token_type=Digit.FLOAT.name, value=float(number_string), start_position=start_position, end_position=self.char_position)
 
     def detect_identifier(self):
         identifier_str = ''
@@ -117,6 +92,6 @@ class LexicalAnalysis:
             identifier_str += self.current_char
             self.proceed()
 
-        token_type = TokenInWords.KEYWORD.name if identifier_str in KEYWORDS else TokenInWords.IDENTIFIER.name
+        token_type = InWords.KEYWORD.name if identifier_str in KEYWORDS else InWords.IDENTIFIER.name
         return Token(token_type, identifier_str, start_position, self.char_position)
 

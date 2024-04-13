@@ -3,7 +3,7 @@ from enum import Enum
 KEYWORDS = ['VAR']
 
 
-class TokenOperation(Enum):
+class Operation(Enum):
     PLUS = '+'
     MINUS = '-'
     DIVIDE = '/'
@@ -14,7 +14,7 @@ class TokenOperation(Enum):
         return self.name
 
 
-class TokenPunctuation(Enum):
+class Punctuation(Enum):
     LEFT_PARENTHESIS = '('
     RIGHT_PARENTHESIS = ')'
 
@@ -22,23 +22,23 @@ class TokenPunctuation(Enum):
         return self.name
 
 
-class TokenDigit(Enum):
+class Digit(Enum):
     FLOAT = 'FLOAT'
     INT = 'INT'
 
 
-class TokenInWords(Enum):
+class InWords(Enum):
     IDENTIFIER = 'IDENTIFIER'
     KEYWORD = 'KEYWORDS'
 
 
-class TokenUtils(Enum):
+class Utils(Enum):
     END = 'END'
 
 
 class Token:
     def __init__(self, token_type, value=None, start_position=None, end_position=None):
-        self.token_type = token_type
+        self.type = token_type
         self.value = value
 
         if start_position:
@@ -49,10 +49,13 @@ class Token:
         if end_position:
             self.end_position = end_position
 
+    def matches(self, token_type, value):
+        return self.type == token_type and self.value == value
+
     def __repr__(self):
         if self.value or self.value == 0:
-            return f'{self.token_type}:{self.value}'
+            return f'{self.type}:{self.value}'
 
-        return f'{self.token_type}'
+        return f'{self.type}'
 
 

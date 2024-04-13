@@ -1,6 +1,6 @@
 from typing import Union
-from token_utils import TokenOperation
-from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, BasicPosition
+from token_utils import Operation
+from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, BasicPosition, VariableAccessNode, VariableAssignNode
 from error import CostumedRunTimeError
 from context import Context
 
@@ -88,7 +88,7 @@ class SemanticalAnalysis:
         if validator.error:
             return validator
 
-        operation_method = self.operation_handler_factory(node.operation.token_type, left_operand)
+        operation_method = self.operation_handler_factory(node.operation.type, left_operand)
         result, error = operation_method(right_operand)
 
         if error:
@@ -106,7 +106,7 @@ class SemanticalAnalysis:
 
         error = None
 
-        if node.operation.token_type == TokenOperation.MINUS.name:
+        if node.operation.type == Operation.MINUS.name:
             number = number.multiplied_by(Number(-1))
 
         if error:
@@ -126,10 +126,10 @@ class SemanticalAnalysis:
     @staticmethod
     def operation_handler_factory(token_type, node):
         operations = {
-            TokenOperation.PLUS.name: node.added_to,
-            TokenOperation.MINUS.name: node.subbed_by,
-            TokenOperation.MULTIPLY.name: node.multiplied_by,
-            TokenOperation.DIVIDE.name: node.divided_by
+            Operation.PLUS.name: node.added_to,
+            Operation.MINUS.name: node.subbed_by,
+            Operation.MULTIPLY.name: node.multiplied_by,
+            Operation.DIVIDE.name: node.divided_by
         }
 
         return operations.get(token_type)
@@ -138,7 +138,9 @@ class SemanticalAnalysis:
         handlers = {
             'BinaryOperationNode': self.transverse_binary,
             'UnaryOperationNode': self.transverse_unary,
-            'NumberNode': self.transverse_number
+            'NumberNode': self.transverse_number,
+            'VariableAccessNode': self.transverse_variable_access_node,
+            'VariableAssignNode': self.transverse_variable_assign_node
         }
 
         node_name = type(node).__name__

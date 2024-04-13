@@ -3,7 +3,7 @@ from lexical_analysis import LexicalAnalysis
 from parser import Parser
 from semantical_analysis import SemanticalAnalysis
 from unittest.mock import MagicMock
-from token_utils import TokenDigit, TokenOperation, TokenUtils
+from token_utils import Digit, Operation, Utils
 from token_utils import Token
 
 

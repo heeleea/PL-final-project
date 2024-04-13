@@ -41,3 +41,22 @@ class UnaryOperationNode(BasicPosition):
 
     def __repr__(self):
         return f"({self.operation}, {self.node})"
+
+
+class VariableAccessNode(BasicPosition):
+    def __init__(self, token):
+        super().__init__()
+        self.token = token
+
+        self.start_position = self.token.start_position
+        self.end_position = self.token.end_position
+
+
+class VariableAssignNode(BasicPosition):
+    def __init__(self, token, value):
+        super().__init__()
+        self.token = token
+        self.value = value
+
+        self.start_position = self.token.start_position
+        self.end_position = self.value.end_position
