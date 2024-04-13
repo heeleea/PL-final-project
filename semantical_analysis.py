@@ -76,6 +76,28 @@ class SemanticalAnalysis:
         method = self.node_handler_factory(node)
         return method(node, context)
 
+    def transverse_variable_access_node(self, node: VariableAccessNode, context):
+        validator = RuntimeValidator()
+        variable_name = node.token.value
+        value = context.symbol_table.get(variable_name)
+
+        if not value:
+            error = CostumedRunTimeError(node.start_position,node.end_position, f"'{variable_name}' is not defined", context)
+            return validator.failure(error)
+
+        return validator.success(value)
+
+    def transverse_variable_assign_node(self, node, context):
+        validator = RuntimeValidator()
+        variable_name = node.token.value
+        value = validator.register(self.transverse(node.value, context))
+
+        if validator.error:
+            return validator
+
+        context.symbol_table.set(variable_name, value)
+        return validator.success(value)
+
     def transverse_binary(self, node: BinaryOperationNode, context):
         validator = RuntimeValidator()
         left_operand = validator.register(self.transverse(node.left_node, context))
