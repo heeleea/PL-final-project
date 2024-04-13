@@ -171,7 +171,8 @@ class SemanticalAnalysis:
         if validator.error:
             return validator
 
-        operation_method = self.operator_handler_factory(node.operation.type, left_operand)
+        method_type = node.operation.value or node.operation.type
+        operation_method = self.operator_handler_factory(method_type, left_operand)
         result, error = operation_method(right_operand)
 
         if error:

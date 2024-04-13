@@ -34,10 +34,18 @@ class LexicalAnalysis:
 
             elif self.current_char in OPERATOR_PREFIXES:
                 operator = OperatorPrefix(self.current_char)
-                #self.proceed()
                 method = self.operators_handlers_factory(operator)
-                token = method()
-                tokens.append(token)
+
+                if self.current_char == OperatorPrefix.NOT_EQUALS.value:
+                    token, error = method()
+                    if error:
+                        return [], error
+
+                    tokens.append(token)
+
+                else:
+                    token = method()
+                    tokens.append(token)
 
             else:
                 token_type = None
