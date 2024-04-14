@@ -48,6 +48,11 @@ class Number(BasicPosition):
         number.set_context(self.context)
         return number, None
 
+    def powered_by(self, power):
+        if isinstance(power, Number):
+            number = Number(self.value ** power.value).set_context(self.context)
+            return number, None
+
     def get_comparison(self, new_number, operator):
         operations = {
             '==': lambda x, y: int(x == y),
@@ -218,6 +223,7 @@ class SemanticalAnalysis:
             ArithmeticOperator.MINUS.name: node.subbed_by,
             ArithmeticOperator.MULTIPLY.name: node.multiplied_by,
             ArithmeticOperator.DIVIDE.name: node.divided_by,
+            ArithmeticOperator.POWER.name: node.powered_by,
             ComparisonOperator.COMPARISON.name: node.equals,
             ComparisonOperator.NOT_EQUALS.name: node.not_equals,
             ComparisonOperator.LESS_THAN.name: node.less_than,

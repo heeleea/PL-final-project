@@ -21,7 +21,7 @@ EXPRESSION_NAMES = {(InWords.KEYWORDS.name, ComparisonOperator.AND.value), (InWo
 COMPARISON_EXPRESSION_NAMES = {ComparisonOperator.COMPARISON.name, ComparisonOperator.NOT_EQUALS.name, ComparisonOperator.LESS_THAN.name,
                                ComparisonOperator.GREATER_THAN.name, ComparisonOperator.LESS_THAN_EQUALS.name, ComparisonOperator.GREATER_THAN_EQUALS.name}
 ARITHMETIC_NAMES = {ArithmeticOperator.PLUS.name, ArithmeticOperator.MINUS.name}
-
+POWER_NAMES = {ArithmeticOperator.POWER.name}
 
 class Parser:
     def __init__(self, tokens):
@@ -47,21 +47,12 @@ class Parser:
 
         return result
 
-    def factor(self):
+
+    def atom(self):
         result = ParserValidator()
         token = self.current_token
 
-        if token.type in ADDITIVE_OPERATORS_NAMES:
-            result.register_advancement()
-            self.advance()
-            factor = result.register(self.factor())
-
-            if result.error:
-                return result
-
-            return result.success(UnaryOperationNode(token, factor))
-
-        elif token.type in NUMBER_TYPES:
+        if token.type in NUMBER_TYPES:
             result.register_advancement()
             self.advance()
             return result.success(NumberNode(token))
@@ -71,6 +62,7 @@ class Parser:
             self.advance()
             variable_node = VariableAccessNode(token)
             return result.success(variable_node)
+
 
         elif token.type in EXPRESSION_STARTERS_NAMES:
             result.register_advancement()
@@ -90,8 +82,27 @@ class Parser:
             return result.failure(error)
 
         error_message = f"Expected {Digit.INT.value}, {Digit.FLOAT.value}, {InWords.IDENTIFIER.name}, {ArithmeticOperator.PLUS.value}, {ArithmeticOperator.MINUS.value} or {Punctuation.LEFT_PARENTHESIS.value}"
-        error = InvalidSyntaxError(error_message, token.start_position, token.end_position) #end = self.current_token.end_position
+        error = InvalidSyntaxError(error_message, token.start_position, token.end_position)  # end = self.current_token.end_position
         return result.failure(error)
+
+    def power(self):
+        return self.binary_operation(self.atom, POWER_NAMES, self.factor)
+
+    def factor(self):
+        result = ParserValidator()
+        token = self.current_token
+
+        if token.type in ADDITIVE_OPERATORS_NAMES:
+            result.register_advancement()
+            self.advance()
+            factor = result.register(self.factor())
+
+            if result.error:
+                return result
+
+            return result.success(UnaryOperationNode(token, factor))
+
+        return self.power()
 
     def binary_operation(self, func_a, operations, func_b=None):
         if func_b is None:

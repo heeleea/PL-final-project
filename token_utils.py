@@ -9,6 +9,7 @@ class ArithmeticOperator(Enum):
     DIVIDE = '/'
     MULTIPLY = '*'
     EQUALS = '='
+    POWER = '^'
 
     def __str__(self):
         return self.name
