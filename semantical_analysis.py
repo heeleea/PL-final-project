@@ -1,6 +1,6 @@
 from typing import Union
 from token_utils import ArithmeticOperator, ComparisonOperator, InWords
-from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, BasicPosition, VariableAccessNode, VariableAssignNode
+from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, BasicPosition, VariableAccessNode, VariableAssignNode, IfNode
 from error import CostumedRunTimeError
 
 
@@ -109,6 +109,9 @@ class Number(BasicPosition):
         copy.set_context(self.context)
         return copy
 
+    def is_true(self):
+        return self.value != 0
+
     def __repr__(self):
         return str(self.value)
 
@@ -214,7 +217,37 @@ class SemanticalAnalysis:
         return RuntimeValidator().success(number)
 
     def transverse_error(self, node, context):
+        # TODO: raising an exception
         pass
+
+    def transverse_if_node(self, node : IfNode, context):
+        validator = RuntimeValidator()
+
+        for condition, expression in node.cases:
+            condition_value = validator.register(self.transverse(condition, context))
+
+            if validator.error:
+                return validator
+
+            if condition_value.is_true():
+                expression_value = validator.register(self.transverse(expression, context))
+
+                if validator.error:
+                    return validator
+
+                return validator.success(expression_value)
+
+        if node.else_case:
+            else_value = validator.register(self.transverse(node.else_case, context))
+
+            if validator.error:
+                return validator
+
+            return validator.success(else_value)
+
+        return validator.success(None)
+
+
 
     @staticmethod
     def operator_handler_factory(token_type, node):

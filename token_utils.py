@@ -1,6 +1,6 @@
 from enum import Enum
 
-KEYWORDS = ['VAR', 'AND', 'OR', 'NOT']
+KEYWORDS = ['VAR', 'AND', 'OR', 'NOT', 'IF', 'THEN', 'ELIF', 'ELSE']
 
 
 class ArithmeticOperator(Enum):
@@ -35,6 +35,13 @@ class ComparisonOperator(Enum):
     AND = "AND"
 
 
+class Conditions(Enum):
+    IF = 'IF'
+    THEN = 'THEN'
+    ELIF = 'ELIF'
+    ELSE = 'ELSE'
+
+
 class Punctuation(Enum):
     LEFT_PARENTHESIS = '('
     RIGHT_PARENTHESIS = ')'
@@ -55,6 +62,10 @@ class InWords(Enum):
     AND = 'AND'
     OR = 'OR'
     NOT = 'NOT'
+    IF = 'IF'
+    THEN = 'THEN'
+    ELIF = 'ELIF'
+    ELSE = 'ELSE'
 
 
 class Utils(Enum):

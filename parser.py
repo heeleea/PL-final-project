@@ -1,6 +1,6 @@
 from error import InvalidSyntaxError
-from ast_nodes import NumberNode, BinaryOperationNode, UnaryOperationNode, VariableAccessNode, VariableAssignNode
-from token_utils import Digit, ArithmeticOperator, Punctuation, Utils, InWords, ComparisonOperator, KEYWORDS
+from token_utils import Digit, ArithmeticOperator, Punctuation, Utils, InWords, ComparisonOperator
+from ast_nodes import NumberNode, BinaryOperationNode, UnaryOperationNode, VariableAccessNode, VariableAssignNode, IfNode
 
 
 NUMBER_TYPES = {Digit.INT.value, Digit.FLOAT.value}
@@ -47,7 +47,6 @@ class Parser:
 
         return result
 
-
     def atom(self):
         result = ParserValidator()
         token = self.current_token
@@ -62,7 +61,6 @@ class Parser:
             self.advance()
             variable_node = VariableAccessNode(token)
             return result.success(variable_node)
-
 
         elif token.type in EXPRESSION_STARTERS_NAMES:
             result.register_advancement()
@@ -80,6 +78,14 @@ class Parser:
             error_message = f"Expected {Punctuation.RIGHT_PARENTHESIS.value}"
             error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
             return result.failure(error)
+
+        elif token.matches(InWords.KEYWORDS.name, 'IF'):
+            if_expression = result.register(self.if_expression())
+
+            if result.error:
+                return result
+
+            return result.success(if_expression)
 
         error_message = f"Expected {Digit.INT.value}, {Digit.FLOAT.value}, {InWords.IDENTIFIER.name}, {ArithmeticOperator.PLUS.value}, {ArithmeticOperator.MINUS.value} or {Punctuation.LEFT_PARENTHESIS.value}"
         error = InvalidSyntaxError(error_message, token.start_position, token.end_position)  # end = self.current_token.end_position
@@ -192,6 +198,70 @@ class Parser:
 
     def arithmetic_expression(self):
         return self.binary_operation(self.term, ARITHMETIC_NAMES)
+
+    def if_expression(self):
+        result = ParserValidator()
+        cases = []
+        else_case = None
+
+        if not self.current_token.matches(InWords.KEYWORDS.name, 'IF'):
+            error = InvalidSyntaxError("Expected 'IF'", self.current_token.start_position, self.current_token.end_position)
+            return result.failure(error)
+
+        result.register_advancement()
+        self.advance()
+
+        condition = result.register(self.expression())
+
+        if result.error:
+            return result
+
+        if not self.current_token.matches(InWords.KEYWORDS.name, 'THEN'):
+            error = InvalidSyntaxError("Expected 'THEN'", self.current_token.start_position, self.current_token.end_position)
+            return result.failure(error)
+
+        result.register_advancement()
+        self.advance()
+
+        expression = result.register(self.expression())
+
+        if result.error:
+            return result
+
+        cases.append((condition, expression))
+
+        while self.current_token.matches(InWords.KEYWORDS.name, 'ELIF'):
+            result.register_advancement()
+            self.advance()
+
+            condition = result.register(self.expression())
+
+            if result.error:
+                return result
+
+            if not self.current_token.matches(InWords.KEYWORDS.name, 'THEN'):
+                error = InvalidSyntaxError("Expected 'THEN'", self.current_token.start_position, self.current_token.end_position)
+                return result.failure(error)
+
+            result.register_advancement()
+            self.advance()
+
+            expression = result.register(self.expression())
+
+            if result.error:
+                return result
+
+            cases.append((condition, expression))
+
+            if self.current_token.matches(InWords.KEYWORDS.name, 'ELSE'):
+                result.register_advancement()
+                self.advance()
+
+                else_case = result.register(self.expression())
+                if result.error:
+                    return result
+
+            return result.success(IfNode(cases, else_case))
 
     def term(self):
         return self.binary_operation(self.factor, MULTIPLICATIVE_OPERATORS_NAMES)
