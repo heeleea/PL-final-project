@@ -23,6 +23,7 @@ COMPARISON_EXPRESSION_NAMES = {ComparisonOperator.COMPARISON.name, ComparisonOpe
 ARITHMETIC_NAMES = {ArithmeticOperator.PLUS.name, ArithmeticOperator.MINUS.name}
 POWER_NAMES = {ArithmeticOperator.POWER.name}
 
+
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
@@ -75,9 +76,10 @@ class Parser:
                 self.advance()
                 return result.success(expression)
 
-            error_message = f"Expected {Punctuation.RIGHT_PARENTHESIS.value}"
-            error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
-            return result.failure(error)
+            else:
+                error_message = f"Expected {Punctuation.RIGHT_PARENTHESIS.value}"
+                error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
+                return result.failure(error)
 
         elif token.matches(InWords.KEYWORDS.name, 'IF'):
             if_expression = result.register(self.if_expression())
@@ -253,15 +255,16 @@ class Parser:
 
             cases.append((condition, expression))
 
-            if self.current_token.matches(InWords.KEYWORDS.name, 'ELSE'):
-                result.register_advancement()
-                self.advance()
+        if self.current_token.matches(InWords.KEYWORDS.name, 'ELSE'):
+            result.register_advancement()
+            self.advance()
 
-                else_case = result.register(self.expression())
-                if result.error:
-                    return result
+            else_case = result.register(self.expression())
 
-            return result.success(IfNode(cases, else_case))
+            if result.error:
+                return result
+
+        return result.success(IfNode(cases, else_case))
 
     def term(self):
         return self.binary_operation(self.factor, MULTIPLICATIVE_OPERATORS_NAMES)

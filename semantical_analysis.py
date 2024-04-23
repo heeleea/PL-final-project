@@ -247,8 +247,6 @@ class SemanticalAnalysis:
 
         return validator.success(None)
 
-
-
     @staticmethod
     def operator_handler_factory(token_type, node):
         operators = {
@@ -275,7 +273,9 @@ class SemanticalAnalysis:
             'UnaryOperationNode': self.transverse_unary,
             'NumberNode': self.transverse_number,
             'VariableAccessNode': self.transverse_variable_access_node,
-            'VariableAssignNode': self.transverse_variable_assign_node
+            'VariableAssignNode': self.transverse_variable_assign_node,
+            'IfNode': self.transverse_if_node
+
         }
 
         node_name = type(node).__name__
