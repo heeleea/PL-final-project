@@ -1,6 +1,6 @@
 from error import InvalidSyntaxError
 from token_utils import Digit, ArithmeticOperator, Punctuation, Utils, InWords, ComparisonOperator
-from ast_nodes import NumberNode, BinaryOperationNode, UnaryOperationNode, VariableAccessNode, VariableAssignNode, IfNode
+from ast_nodes import NumberNode, BinaryOperationNode, UnaryOperationNode, VariableAccessNode, VariableAssignNode, IfNode, ForNode, WhileNode
 
 
 NUMBER_TYPES = {Digit.INT.value, Digit.FLOAT.value}
@@ -22,6 +22,8 @@ COMPARISON_EXPRESSION_NAMES = {ComparisonOperator.COMPARISON.name, ComparisonOpe
                                ComparisonOperator.GREATER_THAN.name, ComparisonOperator.LESS_THAN_EQUALS.name, ComparisonOperator.GREATER_THAN_EQUALS.name}
 ARITHMETIC_NAMES = {ArithmeticOperator.PLUS.name, ArithmeticOperator.MINUS.name}
 POWER_NAMES = {ArithmeticOperator.POWER.name}
+
+LOOP_NAMES = {InWords.FOR.name, InWords.WHILE.name}
 
 
 class Parser:
@@ -89,9 +91,129 @@ class Parser:
 
             return result.success(if_expression)
 
+        elif any(token.matches(InWords.KEYWORDS.name, keyword) for keyword in LOOP_NAMES):
+            loop_method = self.loop_handlers_factory(token.value)
+
+            if loop_method:
+                loop = result.register(loop_method())
+
+                if result.error:
+                    return result
+
+                return result.success(loop)
+
         error_message = f"Expected {Digit.INT.value}, {Digit.FLOAT.value}, {InWords.IDENTIFIER.name}, {ArithmeticOperator.PLUS.value}, {ArithmeticOperator.MINUS.value} or {Punctuation.LEFT_PARENTHESIS.value}"
         error = InvalidSyntaxError(error_message, token.start_position, token.end_position)  # end = self.current_token.end_position
         return result.failure(error)
+
+    def loop_handlers_factory(self, loop):
+        loop_functions = {
+            InWords.IF.name: self.if_expression,
+            InWords.FOR.name: self.for_expression,
+            InWords.WHILE.name: self.while_expression
+        }
+
+        return loop_functions.get(loop)
+
+    def for_expression(self):
+        step_value = None
+        validator = ParserValidator()
+
+        if not self.current_token.matches(InWords.KEYWORDS.name, 'FOR'):
+            error_message = f"Expected {InWords.FOR.name}"
+            error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
+            return validator.failure(error)
+
+        validator.register_advancement()
+        self.advance()
+
+        if self.current_token.type != InWords.IDENTIFIER.name:
+            error = InvalidSyntaxError('Expected identifier', self.current_token.start_position,
+                                       self.current_token.end_position)
+            return validator.failure(error)
+
+        variable_name = self.current_token
+        validator.register_advancement()
+        self.advance()
+
+        if self.current_token.type != ComparisonOperator.EQUALS.name:
+            error = InvalidSyntaxError('Expected identifier', self.current_token.start_position, self.current_token.end_position)
+            return validator.failure(error)
+
+        validator.register_advancement()
+        self.advance()
+
+        start_value = validator.register(self.expression())
+        if validator.error:
+            return validator
+
+        if not self.current_token.matches(InWords.KEYWORDS.name, 'TO'):
+            error_message = f"Expected {InWords.TO.name}"
+            error = InvalidSyntaxError(error_message, self.current_token.start_position,
+                                       self.current_token.end_position)
+            return validator.failure(error)
+
+        validator.register_advancement()
+        self.advance()
+
+        end_value = validator.register(self.expression())
+        if validator.error:
+            return validator
+
+        if self.current_token.matches(InWords.KEYWORDS.name, 'STEP'):
+            validator.register_advancement()
+            self.advance()
+
+            step_value = validator.register(self.expression()) or None
+            if validator.error:
+                return validator
+
+        if not self.current_token.matches(InWords.KEYWORDS.name, 'THEN'):
+            error_message = f"Expected {InWords.THEN.name}"
+            error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
+            return validator.failure(error)
+
+        validator.register_advancement()
+        self.advance()
+
+        body = validator.register(self.expression())
+        if validator.error:
+            return validator
+
+        for_node = ForNode(variable_name, start_value, end_value, step_value, body)
+        return validator.success(for_node)
+
+    def while_expression(self):
+        validator = ParserValidator()
+
+        if not self.current_token.matches(InWords.KEYWORDS.name, 'WHILE'):
+            error_message = f"Expected {InWords.WHILE.name}"
+            error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
+            return validator.failure(error)
+
+        validator.register_advancement()
+        self.advance()
+
+        condition = validator.register(self.expression())
+
+        if validator.error:
+            return validator
+
+        if not self.current_token.matches(InWords.KEYWORDS.name, 'THEN'):
+            error_message = f"Expected {InWords.THEN.name}"
+            error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
+            return validator.failure(error)
+
+        validator.register_advancement()
+        self.advance()
+
+        body = validator.register(self.expression())
+
+        if validator.error:
+            return validator
+
+        while_node = WhileNode(condition, body)
+        return validator.success(while_node)
 
     def power(self):
         return self.binary_operation(self.atom, POWER_NAMES, self.factor)

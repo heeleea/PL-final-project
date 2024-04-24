@@ -1,6 +1,6 @@
 from typing import Union
 from token_utils import ArithmeticOperator, ComparisonOperator, InWords
-from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, BasicPosition, VariableAccessNode, VariableAssignNode, IfNode
+from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, BasicPosition, VariableAccessNode, VariableAssignNode, IfNode, ForNode, WhileNode
 from error import CostumedRunTimeError
 
 
@@ -244,6 +244,61 @@ class SemanticalAnalysis:
                 return validator
 
             return validator.success(else_value)
+
+        return validator.success(None)
+
+    def transverse_for_node(self, node: ForNode, context):
+        validator = RuntimeValidator()
+
+        start_value = validator.register(self.transverse(node.start_value, context))
+        if validator.error:
+            return validator
+
+        end_value = validator.register(self.transverse(node.end_value, context))
+        if validator.error:
+            return validator
+
+        # TODO: try implementing default step_value of 1
+        if node.step:
+            step_value = validator.register(self.transverse(node.step, context))
+            if validator.error:
+                return validator
+
+        else:
+            step_value = Number(1)
+
+        iteration = start_value.value
+
+        if step_value.value >= 0:
+            condition = lambda: iteration < end_value.value
+        else:
+            condition = lambda: iteration > end_value.value
+
+        while condition():
+            context.symbol_table.set(node.token.value, Number(1)) #node.variable_name
+            iteration += step_value.value
+
+            validator.register(self.transverse(node.loop_body, context))
+
+            if validator.error:
+                return validator
+
+        return validator.success(None)
+
+    def transverse_while_node(self, node: WhileNode, context):
+        validator = RuntimeValidator()
+
+        while True:
+            condition = validator.register(self.transverse(node.condition, context))
+            if validator.error:
+                return validator
+
+            if not condition.is_true():
+                break
+
+            validator.register(self.transverse(node.loop_body, context))
+            if validator.error:
+                return validator
 
         return validator.success(None)
 
