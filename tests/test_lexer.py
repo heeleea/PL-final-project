@@ -3,7 +3,7 @@ import pytest
 from error import IllegalCharError
 from tests.test_utils import FILE_NAME
 from lexical_analysis import LexicalAnalysis
-from token_utils import Digit, ArithmeticOperator, Utils, ComparisonOperator, InWords, Punctuation
+from token_utils import Digit, ArithmeticOperator, Utils, ComparisonOperator, InWords, Punctuation, Token
 
 
 @pytest.mark.parametrize('input,expected', [
@@ -105,3 +105,24 @@ def test_detect_punctuation(input,expected):
 
     assert tokens[0].type == expected
     assert tokens[1].type == Utils.END.name
+
+
+@pytest.mark.parametrize('text,length,expected,', [
+    ('1+3', 4, [(1, Digit.INT.name), (None, ArithmeticOperator.PLUS.name), (3, Digit.INT.name), (None, Utils.END.name)]),
+    ('1/0', 4, [(1, Digit.INT.name), (None, ArithmeticOperator.DIVIDE.name), (0, Digit.INT.name), (None, Utils.END.name)]),
+    ('-1*2', 5, [(None, ArithmeticOperator.MINUS.name), (1, Digit.INT.name), (None, ArithmeticOperator.MULTIPLY.name), (2, Digit.INT.name), (None, Utils.END.name)]),
+    ('2*-1', 5, [(2, Digit.INT.name), (None, ArithmeticOperator.MULTIPLY.name), (None, ArithmeticOperator.MINUS.name), (1, Digit.INT.name), (None, Utils.END.name)]),
+    ('9/3', 4, [(9, Digit.INT.name), (None, ArithmeticOperator.DIVIDE.name), (3, Digit.INT.name), (None, Utils.END.name)]),
+    ('0+2', 4, [(0, Digit.INT.name), (None, ArithmeticOperator.PLUS.name), (2, Digit.INT.name), (None, Utils.END.name)]),
+    ('10+1', 4, [(10, Digit.INT.name), (None, ArithmeticOperator.PLUS.name), (1, Digit.INT.name),  (None, Utils.END.name)]),
+    ('VAR a = 5', 5,  [(InWords.VAR.name, InWords.KEYWORDS.name), ('a', InWords.IDENTIFIER.name), (None, ArithmeticOperator.EQUALS.name), (5, Digit.INT.name), (None, Utils.END.name)]),
+    ('VAR b = 7', 4, [(InWords.VAR.name, InWords.KEYWORDS.name), ('b', InWords.IDENTIFIER.name), (None, ArithmeticOperator.EQUALS.name), (7, Digit.INT.name), (None, Utils.END.name)]),
+])
+def test_create_token_stream(text, length, expected):
+    lexer = LexicalAnalysis(text, FILE_NAME)
+    tokens, error = lexer.create_token_stream()
+
+    for i in range(length):
+        assert isinstance(tokens[i], Token)
+        assert expected[i][1] == tokens[i].type
+        assert expected[i][0] == tokens[i].value
