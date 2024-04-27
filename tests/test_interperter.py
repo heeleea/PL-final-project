@@ -6,8 +6,8 @@ from unittest.mock import MagicMock
 from token_utils import Digit, ArithmeticOperator, Utils
 from token_utils import Token
 from run import run
+from tests.test_utils import FILE_NAME
 
-FILE_NAME = '<test>'
 FIRST_INPUT = 'VAR a = VAR d = 5'
 SECOND_INPUT = 'a'
 EXPECTED_RESULT = 5
