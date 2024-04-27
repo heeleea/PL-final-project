@@ -199,7 +199,7 @@ class SemanticalAnalysis:
         error = None
 
         if node.operation.type == ArithmeticOperator.MINUS.name:
-            number = number.multiplied_by(Number(-1))
+            number, error = number.multiplied_by(Number(-1))
 
         elif node.operation.matches(InWords.KEYWORDS.name, 'NOT'):
             number, error = number.logical_not()
@@ -207,6 +207,7 @@ class SemanticalAnalysis:
         if error:
             return result.failure(error)
 
+        number.set_position(node.start_position, node.end_position)
         return result.success(number)
 
     @staticmethod
@@ -220,7 +221,7 @@ class SemanticalAnalysis:
         # TODO: raising an exception
         pass
 
-    def transverse_if_node(self, node : IfNode, context):
+    def transverse_if_node(self, node: IfNode, context):
         validator = RuntimeValidator()
 
         for condition, expression in node.cases:
@@ -263,7 +264,6 @@ class SemanticalAnalysis:
             step_value = validator.register(self.transverse(node.step, context))
             if validator.error:
                 return validator
-
         else:
             step_value = Number(1)
 
@@ -275,7 +275,7 @@ class SemanticalAnalysis:
             condition = lambda: iteration > end_value.value
 
         while condition():
-            context.symbol_table.set(node.token.value, Number(1)) #node.variable_name
+            context.symbol_table.set(node.token.value, Number(iteration)) #node.variable_name
             iteration += step_value.value
 
             validator.register(self.transverse(node.loop_body, context))
@@ -329,8 +329,9 @@ class SemanticalAnalysis:
             'NumberNode': self.transverse_number,
             'VariableAccessNode': self.transverse_variable_access_node,
             'VariableAssignNode': self.transverse_variable_assign_node,
-            'IfNode': self.transverse_if_node
-
+            'IfNode': self.transverse_if_node,
+            'ForNode': self.transverse_for_node,
+            'WhileNode': self.transverse_while_node
         }
 
         node_name = type(node).__name__
