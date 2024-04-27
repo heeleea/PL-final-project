@@ -107,7 +107,7 @@ def test_detect_punctuation(input,expected):
     assert tokens[1].type == Utils.END.name
 
 
-@pytest.mark.parametrize('text,length,expected,', [
+@pytest.mark.parametrize('text,length,expected', [
     ('1+3', 4, [(1, Digit.INT.name), (None, ArithmeticOperator.PLUS.name), (3, Digit.INT.name), (None, Utils.END.name)]),
     ('1/0', 4, [(1, Digit.INT.name), (None, ArithmeticOperator.DIVIDE.name), (0, Digit.INT.name), (None, Utils.END.name)]),
     ('-1*2', 5, [(None, ArithmeticOperator.MINUS.name), (1, Digit.INT.name), (None, ArithmeticOperator.MULTIPLY.name), (2, Digit.INT.name), (None, Utils.END.name)]),
@@ -126,3 +126,12 @@ def test_create_token_stream(text, length, expected):
         assert isinstance(tokens[i], Token)
         assert expected[i][1] == tokens[i].type
         assert expected[i][0] == tokens[i].value
+
+
+@pytest.mark.parametrize('input', ['$', '@', '#', '%', '&', '~'])
+def test_detect_illegal_char(input):
+    lexer = LexicalAnalysis(input, FILE_NAME)
+    _, error = lexer.create_token_stream()
+
+    assert isinstance(error, IllegalCharError)
+    assert error.details == f"'{input}'"
