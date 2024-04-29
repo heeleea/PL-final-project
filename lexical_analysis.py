@@ -32,38 +32,23 @@ class LexicalAnalysis:
                 variable = self.detect_identifier()
                 tokens.append(variable)
 
-            elif self.current_char in OPERATOR_PREFIXES:
-                operator = OperatorPrefix(self.current_char)
-                method = self.operators_handlers_factory(operator)
+            elif self.current_char == OperatorPrefix.NOT_EQUALS.value:
+                token, error = self.detect_not_equals()
+                if error:
+                    return [], error
 
-                if self.current_char == OperatorPrefix.NOT_EQUALS.value:
-                    token, error = method()
-                    if error:
-                        return [], error
-
-                    tokens.append(token)
-
-                else:
-                    token = method()
-                    tokens.append(token)
+                tokens.append(token)
 
             else:
-                token_type = None
+                function, token_type, enum_class = self.token_handlers_factory()
+                if function is not None:
+                    if token_type is not None and enum_class is not None:
+                        token = function(token_type, enum_class)
+                    else:
+                        token = function()
 
-                for enum_class in {ArithmeticOperator, Punctuation}:
-
-                    try:
-                        token_type = enum_class(self.current_char)
-                        if token_type:
-                            break
-
-                    except ValueError:
-                        continue
-
-                if token_type:
-                    token = Token(token_type=enum_class[token_type.name].name, start_position=self.char_position)
-                    tokens.append(token)
-                    self.proceed()
+                    if token:
+                        tokens.append(token)
 
                 else:
                     start_position = self.char_position.get_position()
@@ -76,16 +61,42 @@ class LexicalAnalysis:
         tokens.append(token)
         return tokens, None
 
-    def operators_handlers_factory(self, operator):
-        operator_functions = {
-            OperatorPrefix.NOT_EQUALS: self.detect_not_equals,
+    def token_handlers_factory(self):
+        enum_class, token_type = self.get_current_token_type()
+
+        special_handlers = {
             OperatorPrefix.EQUALS: self.detect_comparison,
             OperatorPrefix.LESS_THAN: self.detect_less_than,
             OperatorPrefix.GREATER_THAN: self.detect_greater_than,
         }
 
-        operator_function = operator_functions.get(operator, self.method_not_found)
-        return operator_function
+        if enum_class is None and token_type is None:
+            return None, None, None
+
+        elif token_type and token_type in special_handlers.keys():
+            function = special_handlers.get(token_type)
+            return function, None, None
+
+        return self.simple_token_handler, enum_class, token_type
+
+    def simple_token_handler(self, enum_class, token_type):
+        start_position = self.char_position.get_position()
+        self.proceed()
+        token = Token(token_type=enum_class[token_type.name].name,
+                      start_position=start_position,
+                      end_position=self.char_position)
+        return token
+
+    def get_current_token_type(self):
+        for enum_class in [OperatorPrefix, Punctuation, ArithmeticOperator]:
+            try:
+                token_type = enum_class(self.current_char)
+                return enum_class, token_type
+
+            except ValueError:
+                continue
+
+        return None, None
 
     def detect_number_type(self):
         number_string = ''
@@ -189,6 +200,3 @@ class LexicalAnalysis:
                       start_position=start_position,
                       end_position=self.char_position)
         return token
-
-    def method_not_found(self):
-        pass
