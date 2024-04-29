@@ -21,8 +21,6 @@ SIXTH_INPUT = 'c'
 EXPECTED_RESULT_C = 13
 
 
-
-
 def test_variable_assignment():
     test_cases = [
         (FIRST_INPUT, EXPECTED_RESULT),
