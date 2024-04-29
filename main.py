@@ -1,11 +1,11 @@
-from lexical_analysis import run_interperter
-
+from run import run
 
 while True:
     text = input("> ")
-    result, error = run_interperter(text, file_name='<stdin>')
+    result, error = run(text, file_name='<stdin>')
 
     if error:
         print(error.to_string())
-    else:
-        print(result)
+    elif result:
+        print(result.value)
+
