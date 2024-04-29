@@ -16,6 +16,18 @@ class NumberNode(BasicPosition):
         return f"{self.token}"
 
 
+class StringNode(BasicPosition):
+    def __init__(self, token):
+        super().__init__()
+        self.token = token
+
+        self.start_position = self.token.start_position
+        self.end_position = self.token.end_position
+
+    def __repr__(self):
+        return f"{self.token}"
+
+
 class BinaryOperationNode(BasicPosition):
     def __init__(self, left_node, operation, right_node):
         super().__init__()

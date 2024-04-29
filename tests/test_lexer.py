@@ -128,10 +128,12 @@ def test_create_token_stream(text, length, expected):
         assert expected[i][0] == tokens[i].value
 
 
-@pytest.mark.parametrize('input', ['$', '@', '#', '%', '&', '~'])
+@pytest.mark.parametrize('input', ['$', '@', '#', '%', '&'])
 def test_detect_illegal_char(input):
     lexer = LexicalAnalysis(input, FILE_NAME)
     _, error = lexer.create_token_stream()
 
     assert isinstance(error, IllegalCharError)
     assert error.details == f"'{input}'"
+
+#TODO test strings, double quotes

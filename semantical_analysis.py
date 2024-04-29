@@ -1,6 +1,6 @@
 from typing import Union
 from token_utils import ArithmeticOperator, ComparisonOperator, InWords
-from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, BasicPosition, VariableAccessNode, VariableAssignNode, IfNode, ForNode, WhileNode
+from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, StringNode,  BasicPosition, VariableAccessNode, VariableAssignNode, IfNode, ForNode, WhileNode, FunctionDefinitionNode, CallableNode
 from error import CostumedRunTimeError
 
 
@@ -116,6 +116,87 @@ class Number(BasicPosition):
         return str(self.value)
 
 
+class Function(Value):
+    def __init__(self, name, arguments, body):
+        super().__init__()
+        self.name = name or "<anonymous>"
+        self.arguments = arguments
+        self.body = body
+
+    def execute(self, args):
+        validator = RuntimeValidator()
+        semantical_analysis = SemanticalAnalysis()
+        new_context = Context(self.name, self.context, self.start_position)
+        new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
+
+        if len(args) > len(self.arguments):
+            error = CostumedRunTimeError(f"{len(args) - len(self.arguments)} too many args passed into '{self.name}'",
+                                         self.start_position,
+                                         self.start_position,
+                                         self.context)
+            return validator.failure(error)
+
+        if len(args) < len(self.arguments):
+            error = CostumedRunTimeError(f"{len(self.arguments) - len(args)} too few args passed into '{self.name}'",
+                                         self.start_position,
+                                         self.end_position,
+                                         self.context)
+            return validator.failure(error)
+
+        for i in range(len(args)):
+            arg_name = self.arguments[i]
+            arg_value = args[i]
+            arg_value.set_context(new_context)
+            new_context.symbol_table.set(arg_name, arg_value)
+
+        value = validator.register(semantical_analysis.transverse(self.body, new_context))
+        if validator.error: return validator
+        return validator.success(value)
+
+    def copy(self):
+        copy = Function(self.name, self.body, self.arguments)
+        copy.set_context(self.context)
+        copy.start_position(self.start_position, self.end_position)
+        return copy
+
+    def __repr__(self):
+        return f"<function {self.name}>"
+
+
+class String(Value):
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+
+    def added_to(self, additional_string):
+
+        if isinstance(additional_string, String):
+            return String(self.value + additional_string.value).set_context(self.context), None
+
+        else:
+            return None, Value.illegal_operation(self, additional_string)
+
+    def multiplied_by(self, number):
+
+        if isinstance(number, Number):
+            return String(self.value * number.value).set_context(self.context), None
+
+        else:
+            return None, Value.illegal_operation(self, number)
+
+    def is_true(self):
+        return len(self.value) > 0
+
+    def copy(self):
+        copy = String(self.value)
+        copy.set_position(self.start_position, self.end_position)
+        copy.set_context(self.context)
+        return copy
+
+    def __repr__(self):
+        return f'"{self.value}"'
+
+
 class RuntimeValidator:
     def __init__(self):
         self.value = None
@@ -216,6 +297,11 @@ class SemanticalAnalysis:
         number.set_context(context)
         number.set_position(node.start_position, node.end_position)
         return RuntimeValidator().success(number)
+
+    @staticmethod
+    def transverse_string(node: StringNode, context):
+        string = String(node.token.value).set_context(context)
+        return RuntimeValidator().success(string)
 
     def transverse_error(self, node, context):
         # TODO: raising an exception
@@ -331,7 +417,10 @@ class SemanticalAnalysis:
             'VariableAssignNode': self.transverse_variable_assign_node,
             'IfNode': self.transverse_if_node,
             'ForNode': self.transverse_for_node,
-            'WhileNode': self.transverse_while_node
+            'WhileNode': self.transverse_while_node,
+            'StringNode': self.transverse_string,
+            'FunctionDefinitionNode': self.transverse_function_definition_node,
+            'CallableNode': self.transverse_callable_node
         }
 
         node_name = type(node).__name__

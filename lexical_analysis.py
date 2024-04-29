@@ -68,6 +68,7 @@ class LexicalAnalysis:
             OperatorPrefix.EQUALS: self.detect_comparison,
             OperatorPrefix.LESS_THAN: self.detect_less_than,
             OperatorPrefix.GREATER_THAN: self.detect_greater_than,
+            Punctuation.STRING: self.detect_string,
         }
 
         if enum_class is None and token_type is None:
@@ -171,6 +172,41 @@ class LexicalAnalysis:
                       start_position=start_position,
                       end_position=self.char_position)
 
+        return token
+
+    def detect_string(self):
+        string =''
+        token_type = InWords.STRING
+        start_position = self.char_position.get_position()
+        escape_character = False
+        self.proceed()
+
+        escape_characters ={
+            'n': '\n',
+            't': '\t'
+        }
+
+        while self.current_char is not None and \
+                (self.current_char is not Punctuation.STRING.value or escape_character):
+
+            if escape_character:
+                string += escape_characters.get(self.current_char, self.current_char)
+
+            else:
+                if self.current_char == '\\':
+                    escape_character = True
+
+                else:
+                    string += self.current_char
+
+            self.proceed()
+            escape_character = False
+
+        self.proceed()
+        
+        token = Token(token_type = token_type.name,
+                      start_position = start_position,
+                      end_position = self.char_position)
         return token
 
     def detect_less_than(self):

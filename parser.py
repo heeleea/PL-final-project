@@ -1,9 +1,10 @@
 from error import InvalidSyntaxError
 from token_utils import Digit, ArithmeticOperator, Punctuation, Utils, InWords, ComparisonOperator
-from ast_nodes import NumberNode, BinaryOperationNode, UnaryOperationNode, VariableAccessNode, VariableAssignNode, IfNode, ForNode, WhileNode
+from ast_nodes import NumberNode, StringNode, BinaryOperationNode, UnaryOperationNode, VariableAccessNode, VariableAssignNode, IfNode, ForNode, WhileNode, FunctionDefinitionNode, CallableNode
 
 
 NUMBER_TYPES = {Digit.INT.value, Digit.FLOAT.value}
+STRING_TYPES = {InWords.STRING.value}
 
 ADDITIVE_OPERATORS = {ArithmeticOperator.PLUS.value, ArithmeticOperator.MINUS.value}
 MULTIPLICATIVE_OPERATORS = {ArithmeticOperator.MULTIPLY.value, ArithmeticOperator.DIVIDE.value}
@@ -58,6 +59,11 @@ class Parser:
             result.register_advancement()
             self.advance()
             return result.success(NumberNode(token))
+
+        if token.type in STRING_TYPES:
+            result.register_advancement()
+            self.advance()
+            return result.success(StringNode(token))
 
         elif token.type in IDENTIFIERS_NAMES:
             result.register_advancement()
