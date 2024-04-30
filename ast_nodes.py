@@ -7,6 +7,10 @@ class BasicPosition:
         self.start_position = None
         self.end_position = None
 
+    def set_position(self, start_position, end_position):
+        self.start_position = start_position
+        self.end_position = end_position
+
 
 class NumberNode(BasicPosition):
     def __init__(self, token):
@@ -93,12 +97,9 @@ class WhileNode(BasicPosition):
 
 
 class ListNode(BasicPosition):
-    def __init__(self, element_node, start_position, end_position): #element?, the position should be inserted here?
+    def __init__(self, element_node):
         super().__init__()
         self.element_node = element_node
-
-        self.start_position = start_position
-        self.end_position = end_position
 
 
 class VariableAccessNode(BasicPosition):

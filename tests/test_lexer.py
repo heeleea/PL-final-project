@@ -98,7 +98,12 @@ def test_detect_inwords(input, expected):
 
 @pytest.mark.parametrize('input,expected', [
     ('(', Punctuation.LEFT_PARENTHESIS.name),
-    (')', Punctuation.RIGHT_PARENTHESIS.name)
+    (')', Punctuation.RIGHT_PARENTHESIS.name),
+    ('[', Punctuation.LEFT_SQUARE.name),
+    (']', Punctuation.RIGHT_SQUARE.name),
+    (',', Punctuation.COMMA.name),
+    ('~', Punctuation.FUNCTION_ASSIGNMENT.name),
+    ('"', Punctuation.STRING.name)
 ])
 def test_detect_punctuation(input,expected):
     lexer = LexicalAnalysis(input, FILE_NAME)

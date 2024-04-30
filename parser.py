@@ -10,8 +10,8 @@ ADDITIVE_OPERATORS = {ArithmeticOperator.PLUS.value, ArithmeticOperator.MINUS.va
 MULTIPLICATIVE_OPERATORS = {ArithmeticOperator.MULTIPLY.value, ArithmeticOperator.DIVIDE.value}
 EXPRESSION_STARTERS = {Punctuation.LEFT_PARENTHESIS.value}
 EXPRESSION_CLOSERS = {Punctuation.RIGHT_PARENTHESIS.value}
-LIST_EXPRESSION_STARTERS = {Punctuation.LEFT_SQUARE.value}
-LIST_EXPRESSION_CLOSERS = {Punctuation.RIGHT_SQUARE.value}
+LIST_STARTERS = {Punctuation.LEFT_SQUARE.value}
+LIST_CLOSERS = {Punctuation.RIGHT_SQUARE.value}
 IDENTIFIERS = {}
 COMPARISON_EXPRESSION = {ComparisonOperator.AND.value, ComparisonOperator.OR.value}
 
@@ -19,8 +19,8 @@ ADDITIVE_OPERATORS_NAMES = {ArithmeticOperator.PLUS.name, ArithmeticOperator.MIN
 MULTIPLICATIVE_OPERATORS_NAMES = {ArithmeticOperator.MULTIPLY.name, ArithmeticOperator.DIVIDE.name}
 EXPRESSION_STARTERS_NAMES = {Punctuation.LEFT_PARENTHESIS.name}
 EXPRESSION_CLOSERS_NAMES = {Punctuation.RIGHT_PARENTHESIS.name}
-LIST_EXPRESSION_STARTERS_NAMES = {Punctuation.LEFT_SQUARE.name}
-LIST_EXPRESSION_CLOSERS_NAMES = {Punctuation.RIGHT_SQUARE.name}
+LIST_STARTERS_NAMES = {Punctuation.LEFT_SQUARE.name}
+LIST_CLOSERS_NAMES = {Punctuation.RIGHT_SQUARE.name}
 IDENTIFIERS_NAMES = {InWords.IDENTIFIER.name}
 EXPRESSION_NAMES = {(InWords.KEYWORDS.name, ComparisonOperator.AND.value), (InWords.KEYWORDS.name, ComparisonOperator.OR.value)}
 COMPARISON_EXPRESSION_NAMES = {ComparisonOperator.COMPARISON.name, ComparisonOperator.NOT_EQUALS.name, ComparisonOperator.LESS_THAN.name,
@@ -75,7 +75,7 @@ class Parser:
             variable_node = VariableAccessNode(token)
             return result.success(variable_node)
 
-        elif token.type in LIST_EXPRESSION_STARTERS_NAMES: #maybe to combine with expression startes?
+        elif token.type in LIST_STARTERS_NAMES:
             list_expression = result.register(self.list_expression())
 
             if result.error:
@@ -127,7 +127,7 @@ class Parser:
 
             return result.success(function_definition)
 
-        #TODO edit the error message including any sign missed
+        #TODO edit the error message including any sign missed, also in expression, and so on
         error_message = f"Expected {Digit.INT.value}, {Digit.FLOAT.value}, {InWords.IDENTIFIER.name}, {ArithmeticOperator.PLUS.value}, {ArithmeticOperator.MINUS.value} or {Punctuation.LEFT_PARENTHESIS.value}," \
                         f"{InWords.IF.name}, {InWords.FOR.name}, {InWords.WHILE.name}, {InWords.FUNCTION.name}"
         error = InvalidSyntaxError(error_message, token.start_position, token.end_position)  # end = self.current_token.end_position
@@ -491,12 +491,13 @@ class Parser:
 
     def list_expression(self):
         validator = ParserValidator()
-        element_nodes = []
+        elements = []
+        #TODO check if its a start position arg or a get position
+        start_position = self.current_token.start_position.get_position()
 
-        start_position = self.current_token.start_position  #why not copy?
-
-        if self.current_token.type is not Punctuation.LEFT_SQUARE.name:  #should i use matches/value?
-            error = InvalidSyntaxError("Expected '['", self.current_token.start_position,
+        if self.current_token.type != Punctuation.LEFT_SQUARE.name:
+            error = InvalidSyntaxError(f"Expected {Punctuation.LEFT_SQUARE.value}",
+                                       self.current_token.start_position,
                                        self.current_token.end_position)
             return validator.failure(error)
 
@@ -508,7 +509,7 @@ class Parser:
             self.advance()
         else:
             expression = validator.register(self.expression())
-            element_nodes.append(expression)
+            elements.append(expression)
 
             if validator.error:
                 error_message = f"Expected {Punctuation.RIGHT_SQUARE.value}, {InWords.VAR.value}, {InWords.IF.value}, " \
@@ -526,8 +527,8 @@ class Parser:
                 argument = validator.register(self.expression())
                 argument.append(argument)
 
-            if self.current_token.type not in LIST_EXPRESSION_CLOSERS_NAMES:
-                error = InvalidSyntaxError(f"Expected {Punctuation.COMMA.value} or {LIST_EXPRESSION_CLOSERS}",
+            if self.current_token.type not in LIST_CLOSERS_NAMES:
+                error = InvalidSyntaxError(f"Expected {Punctuation.COMMA.value} or {LIST_CLOSERS}",
                                            self.current_token.start_position,
                                            self.current_token.end_position)
                 validator.failure(error)
@@ -535,7 +536,8 @@ class Parser:
             validator.register_advancement()
             self.advance()
 
-        list_node = ListNode(element_nodes, start_position, self.current_token.end_position)
+        list_node = ListNode(elements)
+        list_node.set_position(start_position, self.current_token.end_position)
         return list_node
 
     def if_expression(self):

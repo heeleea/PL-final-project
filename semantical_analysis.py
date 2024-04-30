@@ -1,6 +1,6 @@
 from typing import Union
 from token_utils import ArithmeticOperator, ComparisonOperator, InWords
-from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, StringNode,  BasicPosition, VariableAccessNode, VariableAssignNode, IfNode, ForNode, WhileNode, FunctionDefinitionNode, CallableNode
+from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, StringNode,  BasicPosition, VariableAccessNode, VariableAssignNode, IfNode, ForNode, WhileNode, FunctionDefinitionNode, CallableNode, ListNode
 from error import CostumedRunTimeError
 from context import Context
 from symbol_table import SymbolTable
@@ -191,6 +191,71 @@ class Number(Value):
 
     def __repr__(self):
         return str(self.value)
+
+
+class List(Value):
+    def __init__(self, elements):
+        super().__init__()
+        self.elements = elements
+
+    def added_to(self, new_element):
+        updated_list = self.copy() #@@@@@@@@@@2
+        updated_list.elements.append(new_element)
+
+        return updated_list, None
+
+    def subbed_by(self, index):
+        if isinstance(index, Number):
+            updated_list = self.copy()
+            try:
+                updated_list.elements.pop(index.value)
+                return updated_list, None
+            except:
+                error_message = ('Elements at this index could not be removed from'
+                                 'the list because index is out of bounds')
+                error = RuntimeError(index.start_position,
+                                     index.end_position,
+                                     error_message,
+                                     self.context)
+                return None, error
+
+        else:
+            return None, Value.illegal_operation(self, index)
+
+    def multiplied_by(self, new_list):
+        if isinstance(new_list, List):
+            updated_list = self.copy()
+            updated_list.elements.extend(new_list.elements)
+            return updated_list, None
+
+        else:
+            return None, Value.illegal_operation(self, new_list)
+
+    def divided_by(self, index):
+        if isinstance(index, Number):
+            try:
+                return self.elements[index.value], None
+
+            except IndexError:
+                error_message = ('Elements at this index could not be retrieved from'
+                                 'the list because index is out of bounds')
+                error = RuntimeError(index.start_position,
+                                     index.end_position,
+                                     error_message,
+                                     self.context)
+                return None, error
+
+        else:
+            return None, Value.illegal_operation(self, index)
+
+    def copy(self):
+        copied_list = List(self.elements[:])
+        copied_list.set_position((self.start_position, self.end_position))
+        copied_list.set_context(self.context)
+        return copied_list
+
+    def __repr__(self):
+        return f"[{', '.join(map(str, self.elements))}]"
 
 
 class Function(Value):
@@ -413,6 +478,7 @@ class SemanticalAnalysis:
 
     def transverse_for_node(self, node: ForNode, context):
         validator = RuntimeValidator()
+        elements = []
 
         start_value = validator.register(self.transverse(node.start_value, context))
         if validator.error:
@@ -441,15 +507,20 @@ class SemanticalAnalysis:
             context.symbol_table.set(node.token.value, Number(iteration)) #node.variable_name
             iteration += step_value.value
 
-            validator.register(self.transverse(node.loop_body, context))
+            element = validator.register(self.transverse(node.loop_body, context))
+            elements.append(element)
 
             if validator.error:
                 return validator
 
-        return validator.success(None)
+        returned_list = List(elements)
+        returned_list.set_context(context)
+        returned_list.set_position(node.start_position, node.end_position)
+        return validator.success(returned_list)
 
     def transverse_while_node(self, node: WhileNode, context):
         validator = RuntimeValidator()
+        elements = []
 
         while True:
             condition = validator.register(self.transverse(node.condition, context))
@@ -459,11 +530,31 @@ class SemanticalAnalysis:
             if not condition.is_true():
                 break
 
-            validator.register(self.transverse(node.loop_body, context))
+            element = validator.register(self.transverse(node.loop_body, context))
+            elements.append(element)
+
             if validator.error:
                 return validator
 
-        return validator.success(None)
+        returned_list = List(elements)
+        returned_list.set_context(context)
+        returned_list.set_position(node.start_position, node.end_position)
+        return validator.success(returned_list)
+
+    def transverse_list_node(self,node: ListNode, context):
+        validator = RuntimeValidator()
+        elements = []
+
+        for element_node in node.element_node:
+            element = validator.register(self.transverse(element_node, context))
+            elements.append(element)
+            if validator.error:
+                return validator
+
+        returned_list = List(elements)
+        returned_list.set_context(context)
+        returned_list.set_position(node.start_position, node.end_position)
+        return validator.success(returned_list)
 
     @staticmethod
     def transverse_function_definition_node(node: FunctionDefinitionNode, context):
@@ -539,7 +630,8 @@ class SemanticalAnalysis:
             'WhileNode': self.transverse_while_node,
             'StringNode': self.transverse_string,
             'FunctionDefinitionNode': self.transverse_function_definition_node,
-            'CallableNode': self.transverse_callable_node
+            'CallableNode': self.transverse_callable_node,
+            'ListNode': self.transverse_list_node
         }
 
         node_name = type(node).__name__
