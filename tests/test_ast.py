@@ -7,7 +7,7 @@ from tests.test_utils import FILE_NAME
 from lexical_analysis import LexicalAnalysis
 from semantical_analysis import SemanticalAnalysis, Number
 from token_utils import ArithmeticOperator, InWords, ComparisonOperator
-from ast_nodes import NumberNode, BinaryOperationNode, UnaryOperationNode, VariableAssignNode, IfNode, ForNode, WhileNode, VariableAccessNode
+from ast_nodes import NumberNode, BinaryOperationNode, UnaryOperationNode, VariableAssignNode, IfNode, ForNode, WhileNode, VariableAccessNode, FunctionDefinitionNode, CallableNode
 
 
 def test_number_node_creation():
@@ -168,6 +168,21 @@ def test_variable_access_creation():
     assert isinstance(ast.node, VariableAccessNode)
     assert ast.node.token.type == InWords.IDENTIFIER.name
     assert ast.node.token.value == 'result'
+
+
+def test_function_definition_node():
+    lexer = LexicalAnalysis("FUNC add(a,b) ~ a + b", FILE_NAME)
+    tokens, _ = lexer.create_token_stream()
+
+    parse = Parser(tokens)
+    ast = parse.create_ats()
+
+    assert isinstance(ast.node, FunctionDefinitionNode)
+
+
+def test_call_node():
+    lines = ("VAR result = 0", "FUNC add(a,b) ~ a + b", "result = add(1+3)")
+    pass
 
 
 @pytest.mark.parametrize("input", [

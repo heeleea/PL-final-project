@@ -45,6 +45,12 @@ class Conditions(Enum):
 class Punctuation(Enum):
     LEFT_PARENTHESIS = '('
     RIGHT_PARENTHESIS = ')'
+    LEFT_SQUARE = '['
+    RIGHT_SQUARE = ']'
+    COMMA = ','
+    FUNCTION_ASSIGNMENT = '~'
+    STRING = '"'
+
 
     def __str__(self):
         return self.name
@@ -70,6 +76,8 @@ class InWords(Enum):
     TO = 'TO'
     STEP = 'STEP'
     WHILE = 'WHILE'
+    FUNCTION = 'FUNC'
+    STRING = 'STRING'
 
 
 class Utils(Enum):

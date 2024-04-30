@@ -1,3 +1,7 @@
+from token_utils import Token
+from typing import List
+
+
 class BasicPosition:
     def __init__(self):
         self.start_position = None
@@ -114,3 +118,37 @@ class VariableAssignNode(BasicPosition):
 
         self.start_position = self.token.start_position
         self.end_position = self.value.end_position
+
+
+class FunctionDefinitionNode(BasicPosition):
+    def __init__(self, token, arguments, body):
+        super().__init__()
+        self.token = token
+        self.arguments = arguments
+        self.body = body
+
+        if self.token:
+            self.start_position = self.token.start_position
+
+        elif len(self.arguments) > 0:
+            self.start_position = self.arguments[0].start_position
+
+        else:
+            self.start_position = self.body.start_position
+
+        self.end_position = self.body.end_position
+
+
+class CallableNode(BasicPosition):
+    def __init__(self, callable_node, arguments):
+        super().__init__()
+        self.callable_node = callable_node
+        self.arguments = arguments
+
+        self.start_position = self.callable_node.start_position
+
+        if len(self.arguments) > 0:
+            self.end_position = self.arguments[-1].end_position
+        else:
+            self.end_position = self.callable_node.end_position
+

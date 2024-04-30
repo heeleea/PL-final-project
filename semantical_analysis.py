@@ -2,15 +2,16 @@ from typing import Union
 from token_utils import ArithmeticOperator, ComparisonOperator, InWords
 from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, StringNode,  BasicPosition, VariableAccessNode, VariableAssignNode, IfNode, ForNode, WhileNode, FunctionDefinitionNode, CallableNode
 from error import CostumedRunTimeError
+from context import Context
+from symbol_table import SymbolTable
 
 
-class Number(BasicPosition):
-    def __init__(self, value):
+class Value(BasicPosition):
+    def __init__(self, ):
         super().__init__()
-        self.value = value
         self.context = None
+        self.set_position()
         self.set_context()
-        # self.set_position()
 
     def set_position(self, start_position=None, end_position=None):
         self.start_position = start_position
@@ -21,11 +22,77 @@ class Number(BasicPosition):
         self.context = context
         return self
 
+    def added_to(self, other):
+        return None, self.illegal_operation(other)
+
+    def subbed_by(self, other):
+        return None, self.illegal_operation(other)
+
+    def multiplied_by(self, other):
+        return None, self.illegal_operation(other)
+
+    def divided_by(self, other):
+        return None, self.illegal_operation(other)
+
+    def powered_by(self, other):
+        return None, self.illegal_operation(other)
+
+    def equals(self, other):
+        return None, self.illegal_operation(other)
+
+    def not_equals(self, other):
+        return None, self.illegal_operation(other)
+
+    def not_equals(self, other):
+        return None, self.illegal_operation(other)
+
+    def greater_than(self, other):
+        return None, self.illegal_operation(other)
+
+    def greater_than(self, other):
+        return None, self.illegal_operation(other)
+
+    def greater_than_equals(self, other):
+        return None, self.illegal_operation(other)
+
+    def logical_or(self, other):
+        return None, self.illegal_operation(other)
+
+    def logical_not(self, other):
+        return None, self.illegal_operation(other)
+
+    def execute(self, args):
+        return RuntimeValidator().failure(self.illegal_operation())
+
+    def get_copy(self):
+        raise Exception('No copy method defined')
+
+    def is_true(self):
+        return False
+
+    def illegal_operation(self, other=None):
+        if not other:
+            other = self
+
+        return CostumedRunTimeError(
+            self.start_position, other.end_position,
+            'Illegal operation',
+            self.context
+        )
+
+
+class Number(Value):
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+
     def added_to(self, new_number):
         if isinstance(new_number, Number):
             number = Number(self.value + new_number.value)
             number.set_context(self.context)
             return number, None
+
+        return None, Value.illegal_operation(self.start_position, new_number.end_position)
 
     def subbed_by(self, new_number):
         if isinstance(new_number, Number):
@@ -33,25 +100,33 @@ class Number(BasicPosition):
             number.set_context(self.context)
             return number, None
 
+        return None, Value.illegal_operation(self.start_position, new_number.end_position)
+
     def multiplied_by(self, new_number):
         if isinstance(new_number, Number):
             number = Number(self.value * new_number.value)
             number.set_context(self.context)
             return number, None
 
+        return None, Value.illegal_operation(self.start_position, new_number.end_position)
+
     def divided_by(self, new_number):
         if isinstance(new_number, Number):
             if new_number.value == 0:
                 return None, CostumedRunTimeError('Division By Zero', new_number.start_position, new_number.end_position, self.context)
 
-        number = Number(self.value / new_number.value)
-        number.set_context(self.context)
-        return number, None
+            number = Number(self.value / new_number.value)
+            number.set_context(self.context)
+            return number, None
+
+        return None, Value.illegal_operation(self.start_position, new_number.end_position)
 
     def powered_by(self, power):
         if isinstance(power, Number):
             number = Number(self.value ** power.value).set_context(self.context)
             return number, None
+
+        return None, Value.illegal_operation(self.start_position, power.end_position)
 
     def get_comparison(self, new_number, operator):
         operations = {
@@ -72,6 +147,8 @@ class Number(BasicPosition):
                 number = Number(result)
                 number.set_context(self.context)
                 return number, None
+
+        return None, Value.illegal_operation(self.start_position, new_number.end_position)
 
     def equals(self, new_number):
         return self.get_comparison(new_number, ComparisonOperator.COMPARISON.value)
@@ -387,6 +464,48 @@ class SemanticalAnalysis:
                 return validator
 
         return validator.success(None)
+
+    @staticmethod
+    def transverse_function_definition_node(node: FunctionDefinitionNode, context):
+        validator = RuntimeValidator()
+
+        function_name = node.token.value if node.token else None
+        body = node.body
+        arguments = [argument_name.value for argument_name in node.arguments]
+
+        function = Function(function_name, body, arguments)
+        function.set_context(context)
+        function.set_position(node.start_position, node.end_position)
+
+        if node.token:
+            context.symbol_table.set(function_name, function)
+
+        return validator.success(function)
+
+    def transverse_callable_node(self, node: CallableNode, context):
+        validator = RuntimeValidator()
+        arguments = []
+
+        callable_node = self.transverse(node.callable_node, context)
+        value = validator.register(callable_node)
+
+        if validator.error:
+            return validator
+
+        value = value.get_copy()
+        value.set_position(node.start_position, node.end_position)
+
+        for argument in node.arguments:
+            current_argument = validator.register(self.transverse(argument, context))
+            arguments.append(current_argument)
+
+        result = value.execute(arguments)
+        return_value = validator.register(result)
+        if validator.error:
+            return validator
+
+        return validator.success(return_value)
+
 
     @staticmethod
     def operator_handler_factory(token_type, node):

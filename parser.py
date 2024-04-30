@@ -120,7 +120,16 @@ class Parser:
 
                 return result.success(loop)
 
-        error_message = f"Expected {Digit.INT.value}, {Digit.FLOAT.value}, {InWords.IDENTIFIER.name}, {ArithmeticOperator.PLUS.value}, {ArithmeticOperator.MINUS.value} or {Punctuation.LEFT_PARENTHESIS.value}"
+        elif token.matches(InWords.KEYWORDS.name, 'FUNC'):
+            function_definition = result.register(self.function_definition())
+            if result.error:
+                return function_definition
+
+            return result.success()
+
+        #TODO edit the error message including any sign missed
+        error_message = f"Expected {Digit.INT.value}, {Digit.FLOAT.value}, {InWords.IDENTIFIER.name}, {ArithmeticOperator.PLUS.value}, {ArithmeticOperator.MINUS.value} or {Punctuation.LEFT_PARENTHESIS.value}," \
+                        f"{InWords.IF.name}, {InWords.FOR.name}, {InWords.WHILE.name}, {InWords.FUNCTION.name}"
         error = InvalidSyntaxError(error_message, token.start_position, token.end_position)  # end = self.current_token.end_position
         return result.failure(error)
 
@@ -233,8 +242,144 @@ class Parser:
         while_node = WhileNode(condition, body)
         return validator.success(while_node)
 
+    def function_definition(self):
+        validator = ParserValidator()
+
+        if not self.current_token.matches(InWords.KEYWORDS.name, 'FUNC'):
+            error = InvalidSyntaxError(f"Expected {InWords.FUNCTION.value}",
+                                       self.current_token.start_position,
+                                       self.current_token.end_position)
+            return validator.failure(error)
+
+        validator.register_advancement()
+        self.advance()
+
+        if self.current_token.type == InWords.IDENTIFIER.name:
+            function_name = self.current_token
+            validator.register_advancement()
+            self.advance()
+
+            if self.current_token.type not in EXPRESSION_STARTERS_NAMES:
+                error = InvalidSyntaxError(f"Expected {EXPRESSION_STARTERS}",
+                                           self.current_token.start_position,
+                                           self.current_token.end_position)
+                validator.failure(error)
+
+        else:
+            function_name = None
+            if self.current_token.type not in EXPRESSION_STARTERS_NAMES:
+                error = InvalidSyntaxError(f"Expected {EXPRESSION_STARTERS}",
+                                           self.current_token.start_position,
+                                           self.current_token.end_position)
+                validator.failure(error)
+
+        validator.register_advancement()
+        self.advance()
+
+        arguments = []
+
+        if self.current_token.type == InWords.IDENTIFIER.name:
+            arguments.append(self.current_token)
+            validator.register_advancement()
+            self.advance()
+
+        while self.current_token.type == Punctuation.COMMA.name:
+            validator.register_advancement()
+            self.advance()
+
+            if self.current_token.type == InWords.IDENTIFIER.name:
+                error = InvalidSyntaxError(f"Expected {InWords.IDENTIFIER.value}",
+                                           self.current_token.start_position,
+                                           self.current_token.end_position)
+                validator.failure(error)
+
+            arguments.append(self.current_token)
+            validator.register_advancement()
+            self.advance()
+            
+        if self.current_token.type not in EXPRESSION_CLOSERS_NAMES:
+            error = InvalidSyntaxError(f"Expected {Punctuation.COMMA.value} or {EXPRESSION_CLOSERS}",
+                                       self.current_token.start_position,
+                                       self.current_token.end_position)
+            validator.failure(error)
+
+        else:
+            if self.current_token.type not in EXPRESSION_CLOSERS_NAMES:
+                error = InvalidSyntaxError(f"Expected {Punctuation.COMMA.value} or {EXPRESSION_CLOSERS}",
+                                           self.current_token.start_position,
+                                           self.current_token.end_position)
+                validator.failure(error)
+
+        validator.register_advancement()
+        self.advance()
+
+        if self.current_token.type != Punctuation.FUNCTION_ASSIGNMENT.name:
+            error = InvalidSyntaxError(f"Expected {Punctuation.FUNCTION_ASSIGNMENT.value}",
+                                       self.current_token.start_position,
+                                       self.current_token.end_position)
+            validator.failure(error)
+
+        validator.register_advancement()
+        self.advance()
+
+        body = validator.register(self.expression())
+        if validator.error:
+            return validator
+
+        function_node = FunctionDefinitionNode(function_name, arguments, body)
+        return validator.success(function_node)
+
+    def call(self):
+        validator = ParserValidator()
+        atom = validator.register(self.atom())
+
+        if validator.error:
+            return validator
+
+        if self.current_token.type in EXPRESSION_STARTERS_NAMES:
+            validator.register_advancement()
+            self.advance()
+
+            arguments = []
+            if self.current_token.type in EXPRESSION_CLOSERS_NAMES:
+                validator.register_advancement()
+                self.advance()
+            else:
+                argument = validator.register(self.expression())
+                arguments.append(argument)
+
+                if validator.error:
+                    error_message = f"Expected {Punctuation.RIGHT_PARENTHESIS.value}, {InWords.VAR.value}, {InWords.IF.value}, " \
+                                    f"{InWords.FOR.value}, {InWords.WHILE.value}, {InWords.FUNCTION.value}, {Digit.INT.value}" \
+                                    f"{Digit.FLOAT.name}, {InWords.IDENTIFIER.name}"
+                    error = InvalidSyntaxError(error_message,
+                                               self.current_token.start_position,
+                                               self.current_token.end_position)
+                    validator.failure(error)
+
+                while self.current_token.type == Punctuation.COMMA.name:
+                    validator.register_advancement()
+                    self.advance()
+
+                    argument = validator.register(self.expression())
+                    argument.append(argument)
+
+                if self.current_token.type not in EXPRESSION_CLOSERS_NAMES:
+                    error = InvalidSyntaxError(f"Expected {Punctuation.COMMA.value} or {EXPRESSION_CLOSERS}",
+                                               self.current_token.start_position,
+                                               self.current_token.end_position)
+                    validator.failure(error)
+
+                validator.register_advancement()
+                self.advance()
+
+            callable_node = CallableNode(atom, arguments)
+            validator.success(callable_node)
+
+        validator.success(atom)
+
     def power(self):
-        return self.binary_operation(self.atom, POWER_NAMES, self.factor)
+        return self.binary_operation(self.call, POWER_NAMES, self.factor)
 
     def factor(self):
         result = ParserValidator()
