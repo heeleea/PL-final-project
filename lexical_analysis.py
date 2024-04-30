@@ -17,6 +17,7 @@ class LexicalAnalysis:
         self.char_position.advance(self.current_char)
         self.current_char = self.text[self.char_position.index] if self.char_position.index < len(self.text) else None
 
+    #TODO implementing lists in lexer
     def create_token_stream(self):
         tokens = []
 

@@ -88,6 +88,15 @@ class WhileNode(BasicPosition):
         self.end_position = self.loop_body.end_position
 
 
+class ListNode(BasicPosition):
+    def __init__(self, element_node, start_position, end_position): #element?, the position should be inserted here?
+        super().__init__()
+        self.element_node = element_node
+
+        self.start_position = start_position
+        self.end_position = end_position
+
+
 class VariableAccessNode(BasicPosition):
     def __init__(self, token):
         super().__init__()

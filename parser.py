@@ -1,6 +1,6 @@
 from error import InvalidSyntaxError
 from token_utils import Digit, ArithmeticOperator, Punctuation, Utils, InWords, ComparisonOperator
-from ast_nodes import NumberNode, StringNode, BinaryOperationNode, UnaryOperationNode, VariableAccessNode, VariableAssignNode, IfNode, ForNode, WhileNode, FunctionDefinitionNode, CallableNode
+from ast_nodes import NumberNode, StringNode, ListNode, BinaryOperationNode, UnaryOperationNode, VariableAccessNode, VariableAssignNode, IfNode, ForNode, WhileNode, FunctionDefinitionNode, CallableNode
 
 
 NUMBER_TYPES = {Digit.INT.value, Digit.FLOAT.value}
@@ -10,6 +10,8 @@ ADDITIVE_OPERATORS = {ArithmeticOperator.PLUS.value, ArithmeticOperator.MINUS.va
 MULTIPLICATIVE_OPERATORS = {ArithmeticOperator.MULTIPLY.value, ArithmeticOperator.DIVIDE.value}
 EXPRESSION_STARTERS = {Punctuation.LEFT_PARENTHESIS.value}
 EXPRESSION_CLOSERS = {Punctuation.RIGHT_PARENTHESIS.value}
+LIST_EXPRESSION_STARTERS = {Punctuation.LEFT_SQUARE.value}
+LIST_EXPRESSION_CLOSERS = {Punctuation.RIGHT_SQUARE.value}
 IDENTIFIERS = {}
 COMPARISON_EXPRESSION = {ComparisonOperator.AND.value, ComparisonOperator.OR.value}
 
@@ -17,6 +19,8 @@ ADDITIVE_OPERATORS_NAMES = {ArithmeticOperator.PLUS.name, ArithmeticOperator.MIN
 MULTIPLICATIVE_OPERATORS_NAMES = {ArithmeticOperator.MULTIPLY.name, ArithmeticOperator.DIVIDE.name}
 EXPRESSION_STARTERS_NAMES = {Punctuation.LEFT_PARENTHESIS.name}
 EXPRESSION_CLOSERS_NAMES = {Punctuation.RIGHT_PARENTHESIS.name}
+LIST_EXPRESSION_STARTERS_NAMES = {Punctuation.LEFT_SQUARE.name}
+LIST_EXPRESSION_CLOSERS_NAMES = {Punctuation.RIGHT_SQUARE.name}
 IDENTIFIERS_NAMES = {InWords.IDENTIFIER.name}
 EXPRESSION_NAMES = {(InWords.KEYWORDS.name, ComparisonOperator.AND.value), (InWords.KEYWORDS.name, ComparisonOperator.OR.value)}
 COMPARISON_EXPRESSION_NAMES = {ComparisonOperator.COMPARISON.name, ComparisonOperator.NOT_EQUALS.name, ComparisonOperator.LESS_THAN.name,
@@ -60,7 +64,7 @@ class Parser:
             self.advance()
             return result.success(NumberNode(token))
 
-        if token.type in STRING_TYPES:
+        if token.type in STRING_TYPES: #should be elif?
             result.register_advancement()
             self.advance()
             return result.success(StringNode(token))
@@ -70,6 +74,14 @@ class Parser:
             self.advance()
             variable_node = VariableAccessNode(token)
             return result.success(variable_node)
+
+        elif token.type in LIST_EXPRESSION_STARTERS_NAMES: #maybe to combine with expression startes?
+            list_expression = result.register(self.list_expression())
+
+            if result.error:
+                return result
+
+            return result.success(list_expression)
 
         elif token.type in EXPRESSION_STARTERS_NAMES:
             result.register_advancement()
@@ -329,13 +341,62 @@ class Parser:
     def arithmetic_expression(self):
         return self.binary_operation(self.term, ARITHMETIC_NAMES)
 
+    def list_expression(self):
+        validator = ParserValidator()
+        element_nodes = []
+
+        start_position = self.current_token.start_position  #why not copy?
+
+        if self.current_token.type is not Punctuation.LEFT_SQUARE.name:  #should i use matches/value?
+            error = InvalidSyntaxError("Expected '['", self.current_token.start_position,
+                                       self.current_token.end_position)
+            return validator.failure(error)
+
+        validator.register_advancement()
+        self.advance()
+
+        if self.current_token.type == Punctuation.RIGHT_SQUARE.name:
+            validator.register_advancement()
+            self.advance()
+        else:
+            expression = validator.register(self.expression())
+            element_nodes.append(expression)
+
+            if validator.error:
+                error_message = f"Expected {Punctuation.RIGHT_SQUARE.value}, {InWords.VAR.value}, {InWords.IF.value}, " \
+                                f"{InWords.FOR.value}, {InWords.WHILE.value}, {InWords.FUNCTION.value}, {Digit.INT.value}" \
+                                f"{Digit.FLOAT.name}, {InWords.IDENTIFIER.name}"
+                error = InvalidSyntaxError(error_message,
+                                           self.current_token.start_position,
+                                           self.current_token.end_position)
+                validator.failure(error)
+
+            while self.current_token.type == Punctuation.COMMA.name:
+                validator.register_advancement()
+                self.advance()
+
+                argument = validator.register(self.expression())
+                argument.append(argument)
+
+            if self.current_token.type not in LIST_EXPRESSION_CLOSERS_NAMES:
+                error = InvalidSyntaxError(f"Expected {Punctuation.COMMA.value} or {LIST_EXPRESSION_CLOSERS}",
+                                           self.current_token.start_position,
+                                           self.current_token.end_position)
+                validator.failure(error)
+
+            validator.register_advancement()
+            self.advance()
+
+        list_node = ListNode(element_nodes, start_position, self.current_token.end_position)
+        return list_node
+
     def if_expression(self):
         result = ParserValidator()
         cases = []
         else_case = None
 
         if not self.current_token.matches(InWords.KEYWORDS.name, 'IF'):
-            error = InvalidSyntaxError("Expected 'IF'", self.current_token.start_position, self.current_token.end_position)
+            error = InvalidSyntaxError("Expected 'IF'", self.current_token.start_position, self.current_token.end_position) #why not copy?
             return result.failure(error)
 
         result.register_advancement()
@@ -347,7 +408,7 @@ class Parser:
             return result
 
         if not self.current_token.matches(InWords.KEYWORDS.name, 'THEN'):
-            error = InvalidSyntaxError("Expected 'THEN'", self.current_token.start_position, self.current_token.end_position)
+            error = InvalidSyntaxError("Expected 'THEN'", self.current_token.start_position, self.current_token.end_position) #why not copy?
             return result.failure(error)
 
         result.register_advancement()
