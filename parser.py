@@ -64,7 +64,7 @@ class Parser:
             self.advance()
             return result.success(NumberNode(token))
 
-        if token.type in STRING_TYPES: #should be elif?
+        elif token.type in STRING_TYPES:
             result.register_advancement()
             self.advance()
             return result.success(StringNode(token))
@@ -125,7 +125,7 @@ class Parser:
             if result.error:
                 return function_definition
 
-            return result.success()
+            return result.success(function_definition)
 
         #TODO edit the error message including any sign missed
         error_message = f"Expected {Digit.INT.value}, {Digit.FLOAT.value}, {InWords.IDENTIFIER.name}, {ArithmeticOperator.PLUS.value}, {ArithmeticOperator.MINUS.value} or {Punctuation.LEFT_PARENTHESIS.value}," \
@@ -287,7 +287,7 @@ class Parser:
             validator.register_advancement()
             self.advance()
 
-            if self.current_token.type == InWords.IDENTIFIER.name:
+            if self.current_token.type != InWords.IDENTIFIER.name:
                 error = InvalidSyntaxError(f"Expected {InWords.IDENTIFIER.value}",
                                            self.current_token.start_position,
                                            self.current_token.end_position)
@@ -363,6 +363,9 @@ class Parser:
 
                     argument = validator.register(self.expression())
                     argument.append(argument)
+
+                    if validator.error:
+                        return validator
 
                 if self.current_token.type not in EXPRESSION_CLOSERS_NAMES:
                     error = InvalidSyntaxError(f"Expected {Punctuation.COMMA.value} or {EXPRESSION_CLOSERS}",

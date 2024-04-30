@@ -118,7 +118,7 @@ def test_detect_punctuation(input,expected):
     ('10+1', 4, [(10, Digit.INT.name), (None, ArithmeticOperator.PLUS.name), (1, Digit.INT.name),  (None, Utils.END.name)]),
     ('VAR a = 5', 5,  [(InWords.VAR.name, InWords.KEYWORDS.name), ('a', InWords.IDENTIFIER.name), (None, ArithmeticOperator.EQUALS.name), (5, Digit.INT.name), (None, Utils.END.name)]),
     ('VAR b = 7', 4, [(InWords.VAR.name, InWords.KEYWORDS.name), ('b', InWords.IDENTIFIER.name), (None, ArithmeticOperator.EQUALS.name), (7, Digit.INT.name), (None, Utils.END.name)]),
-    ('FUNC add(a,b) ~ a + b', 12, [(InWords.FUNCTION.value, InWords.IDENTIFIER.name), ('add', InWords.IDENTIFIER.name), (None, Punctuation.LEFT_PARENTHESIS.name),
+    ('FUNC add(a,b) ~ a + b', 12, [(InWords.FUNCTION.value, InWords.KEYWORDS.name), ('add', InWords.IDENTIFIER.name), (None, Punctuation.LEFT_PARENTHESIS.name),
                                   ('a', InWords.IDENTIFIER.name), (None, Punctuation.COMMA.name), ('b', InWords.IDENTIFIER.name), (None, Punctuation.RIGHT_PARENTHESIS.name),
                                   (None, Punctuation.FUNCTION_ASSIGNMENT.value), ('a', InWords.IDENTIFIER.name), (None, ArithmeticOperator.PLUS.name), ('b', InWords.IDENTIFIER.name), (None, Utils.END.name)]),
 ])
