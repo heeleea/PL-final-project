@@ -76,8 +76,9 @@ class InWords(Enum):
     TO = 'TO'
     STEP = 'STEP'
     WHILE = 'WHILE'
-    FUNCTION = 'FUNC'
+    FUNC = 'FUNC'
     STRING = 'STRING'
+    LIST = 'LIST'
 
 
 class Utils(Enum):

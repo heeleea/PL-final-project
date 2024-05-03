@@ -75,14 +75,6 @@ class Parser:
             variable_node = VariableAccessNode(token)
             return result.success(variable_node)
 
-        elif token.type in LIST_STARTERS_NAMES:
-            list_expression = result.register(self.list_expression())
-
-            if result.error:
-                return result
-
-            return result.success(list_expression)
-
         elif token.type in EXPRESSION_STARTERS_NAMES:
             result.register_advancement()
             self.advance()
@@ -95,6 +87,14 @@ class Parser:
                 result.register_advancement()
                 self.advance()
                 return result.success(expression)
+
+            elif token.type in LIST_STARTERS_NAMES:
+                list_expression = result.register(self.list_expression())
+
+                if result.error:
+                    return result
+
+                return result.success(list_expression)
 
             else:
                 error_message = f"Expected {Punctuation.RIGHT_PARENTHESIS.value}"
@@ -129,7 +129,7 @@ class Parser:
 
         #TODO edit the error message including any sign missed, also in expression, and so on
         error_message = f"Expected {Digit.INT.value}, {Digit.FLOAT.value}, {InWords.IDENTIFIER.name}, {ArithmeticOperator.PLUS.value}, {ArithmeticOperator.MINUS.value} or {Punctuation.LEFT_PARENTHESIS.value}," \
-                        f"{InWords.IF.name}, {InWords.FOR.name}, {InWords.WHILE.name}, {InWords.FUNCTION.name}"
+                        f"{InWords.IF.name}, {InWords.FOR.name}, {InWords.WHILE.name}, {InWords.FUNC.name}"
         error = InvalidSyntaxError(error_message, token.start_position, token.end_position)  # end = self.current_token.end_position
         return result.failure(error)
 
@@ -137,7 +137,10 @@ class Parser:
         loop_functions = {
             InWords.IF.name: self.if_expression,
             InWords.FOR.name: self.for_expression,
-            InWords.WHILE.name: self.while_expression
+            InWords.WHILE.name: self.while_expression,
+            InWords.FUNC.name: self.function_definition,
+            InWords.LIST.name: self.list_expression
+
         }
 
         return loop_functions.get(loop)
@@ -246,7 +249,7 @@ class Parser:
         validator = ParserValidator()
 
         if not self.current_token.matches(InWords.KEYWORDS.name, 'FUNC'):
-            error = InvalidSyntaxError(f"Expected {InWords.FUNCTION.value}",
+            error = InvalidSyntaxError(f"Expected {InWords.FUNC.value}",
                                        self.current_token.start_position,
                                        self.current_token.end_position)
             return validator.failure(error)
@@ -350,7 +353,7 @@ class Parser:
 
                 if validator.error:
                     error_message = f"Expected {Punctuation.RIGHT_PARENTHESIS.value}, {InWords.VAR.value}, {InWords.IF.value}, " \
-                                    f"{InWords.FOR.value}, {InWords.WHILE.value}, {InWords.FUNCTION.value}, {Digit.INT.value}" \
+                                    f"{InWords.FOR.value}, {InWords.WHILE.value}, {InWords.FUNC.value}, {Digit.INT.value}" \
                                     f"{Digit.FLOAT.name}, {InWords.IDENTIFIER.name}"
                     error = InvalidSyntaxError(error_message,
                                                self.current_token.start_position,
@@ -452,7 +455,6 @@ class Parser:
             variable_node = VariableAssignNode(variable_name, expression)
             return result.success(variable_node)
 
-        # operation_result = self.binary_operation(self.term, ADDITIVE_OPERATORS_NAMES)
         operation_result = self.binary_operation(self.comparison_expression, EXPRESSION_NAMES)
         node = result.register(operation_result)
 
@@ -513,7 +515,7 @@ class Parser:
 
             if validator.error:
                 error_message = f"Expected {Punctuation.RIGHT_SQUARE.value}, {InWords.VAR.value}, {InWords.IF.value}, " \
-                                f"{InWords.FOR.value}, {InWords.WHILE.value}, {InWords.FUNCTION.value}, {Digit.INT.value}" \
+                                f"{InWords.FOR.value}, {InWords.WHILE.value}, {InWords.FUNC.value}, {Digit.INT.value}" \
                                 f"{Digit.FLOAT.name}, {InWords.IDENTIFIER.name}"
                 error = InvalidSyntaxError(error_message,
                                            self.current_token.start_position,
