@@ -91,8 +91,8 @@ class Token:
         self.value = value
 
         if start_position:
-            self.start_position = start_position.get_position()
-            self.end_position = start_position.get_position()
+            self.start_position = start_position.get_copy()
+            self.end_position = start_position.get_copy()
             self.end_position.advance()
 
         if end_position:

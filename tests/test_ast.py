@@ -181,8 +181,31 @@ def test_function_definition_node():
 
 
 def test_call_node():
-    lines = ("VAR result = 0", "FUNC add(a,b) ~ a + b", "result = add(1+3)")
-    pass
+    global_symbol_table = SymbolTable()
+    global_symbol_table.set("TRUE", Number(1))
+    global_symbol_table.set("FALSE", Number(0))
+    global_symbol_table.set("NULL", Number(0))
+
+    lexer = LexicalAnalysis("FUNC add(a,b) ~ a + b", FILE_NAME)
+    tokens, _ = lexer.create_token_stream()
+
+    parse = Parser(tokens)
+    ast = parse.create_ats()
+
+    semantical_analysis = SemanticalAnalysis()
+    context = Context('<program>')
+    context.symbol_table = global_symbol_table
+    _ = semantical_analysis.transverse(ast.node, context)
+
+    lexer = LexicalAnalysis("VAR result = add(1+3)", FILE_NAME)
+    tokens, _ = lexer.create_token_stream()
+
+    parse = Parser(tokens)
+    ast = parse.create_ats()
+
+    assert isinstance(ast.node, VariableAccessNode)
+    assert ast.node.token.type == InWords.IDENTIFIER.name
+    assert ast.node.token.value == '4'
 
 
 @pytest.mark.parametrize("input", [

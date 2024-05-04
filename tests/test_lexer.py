@@ -137,6 +137,32 @@ def test_create_token_stream(text, length, expected):
         assert expected[i][0] == tokens[i].value
 
 
+def test_detect_string():
+    string = "a string to test with"
+    lexer = LexicalAnalysis(f'"{string}"', FILE_NAME)
+    tokens, error = lexer.create_token_stream()
+
+    assert tokens[0].type == InWords.STRING.name
+    assert tokens[0].value == string
+
+
+@pytest.mark.parametrize('first_input,second_input,operation,expected', [
+    ("hello ", "world", ArithmeticOperator.PLUS.value, "hello world"),
+    ("hello ", 3, ArithmeticOperator.MULTIPLY.value, "hello hello hello ")
+
+])
+def test_string_with_operations(first_input, second_input, operation, expected):
+    lexer = LexicalAnalysis(f'"{first_input}{operation}{second_input}"', FILE_NAME)
+    tokens, error = lexer.create_token_stream()
+
+    assert tokens[0].type == InWords.STRING.name
+    assert tokens[0].value == expected
+
+
+def test_string_with_func(first_input):
+    pass
+
+
 @pytest.mark.parametrize('input', ['$', '@', '#', '%', '&'])
 def test_detect_illegal_char(input):
     lexer = LexicalAnalysis(input, FILE_NAME)

@@ -58,11 +58,13 @@ class Value(BasicPosition):
     def logical_or(self, other):
         return None, self.illegal_operation(other)
 
-    def logical_not(self, other):
-        return None, self.illegal_operation(other)
+    def logical_not(self):
+        return None, self.illegal_operation()
 
     def execute(self, args):
-        return RuntimeValidator().failure(self.illegal_operation())
+        validator = RuntimeValidator()
+        validator.failure(self.illegal_operation())
+        return validator
 
     def get_copy(self):
         raise Exception('No copy method defined')
@@ -74,11 +76,8 @@ class Value(BasicPosition):
         if not other:
             other = self
 
-        return CostumedRunTimeError(
-            self.start_position, other.end_position,
-            'Illegal operation',
-            self.context
-        )
+        error = CostumedRunTimeError('Illegal operation', self.start_position, other.end_position, self.context)
+        return error
 
 
 class Number(Value):
@@ -199,20 +198,19 @@ class List(Value):
         self.elements = elements
 
     def added_to(self, new_element):
-        updated_list = self.copy() #@@@@@@@@@@2
+        updated_list = self.get_copy()
         updated_list.elements.append(new_element)
 
         return updated_list, None
 
     def subbed_by(self, index):
         if isinstance(index, Number):
-            updated_list = self.copy()
+            updated_list = self.get_copy()
             try:
                 updated_list.elements.pop(index.value)
                 return updated_list, None
             except:
-                error_message = ('Elements at this index could not be removed from'
-                                 'the list because index is out of bounds')
+                error_message = 'Elements at this index could not be removed from the list because index is out of bounds'
                 error = RuntimeError(index.start_position,
                                      index.end_position,
                                      error_message,
@@ -224,7 +222,7 @@ class List(Value):
 
     def multiplied_by(self, new_list):
         if isinstance(new_list, List):
-            updated_list = self.copy()
+            updated_list = self.get_copy()
             updated_list.elements.extend(new_list.elements)
             return updated_list, None
 
@@ -237,8 +235,7 @@ class List(Value):
                 return self.elements[index.value], None
 
             except IndexError:
-                error_message = ('Elements at this index could not be retrieved from'
-                                 'the list because index is out of bounds')
+                error_message = 'Elements at this index could not be retrieved from the list because index is out of bounds'
                 error = RuntimeError(index.start_position,
                                      index.end_position,
                                      error_message,
@@ -248,7 +245,7 @@ class List(Value):
         else:
             return None, Value.illegal_operation(self, index)
 
-    def copy(self):
+    def get_copy(self):
         copied_list = List(self.elements[:])
         copied_list.set_position((self.start_position, self.end_position))
         copied_list.set_context(self.context)
@@ -295,10 +292,10 @@ class Function(Value):
         if validator.error: return validator
         return validator.success(value)
 
-    def copy(self):
+    def get_copy(self):
         copy = Function(self.name, self.body, self.arguments)
         copy.set_context(self.context)
-        copy.start_position(self.start_position, self.end_position)
+        copy.set_position(self.start_position, self.end_position)
         return copy
 
     def __repr__(self):
@@ -329,10 +326,10 @@ class String(Value):
     def is_true(self):
         return len(self.value) > 0
 
-    def copy(self):
+    def get_copy(self):
         copy = String(self.value)
-        copy.set_position(self.start_position, self.end_position)
         copy.set_context(self.context)
+        copy.set_position(self.start_position, self.end_position)
         return copy
 
     def __repr__(self):

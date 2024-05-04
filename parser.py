@@ -26,8 +26,7 @@ EXPRESSION_NAMES = {(InWords.KEYWORDS.name, ComparisonOperator.AND.value), (InWo
 COMPARISON_EXPRESSION_NAMES = {ComparisonOperator.COMPARISON.name, ComparisonOperator.NOT_EQUALS.name, ComparisonOperator.LESS_THAN.name,
                                ComparisonOperator.GREATER_THAN.name, ComparisonOperator.LESS_THAN_EQUALS.name, ComparisonOperator.GREATER_THAN_EQUALS.name}
 ARITHMETIC_NAMES = {ArithmeticOperator.PLUS.name, ArithmeticOperator.MINUS.name}
-POWER_NAMES = {ArithmeticOperator.POWER.name}
-
+POWER_NAMES = {ArithmeticOperator.POWER.name, }
 LOOP_NAMES = {InWords.FOR.name, InWords.WHILE.name}
 
 
@@ -344,9 +343,11 @@ class Parser:
             self.advance()
 
             arguments = []
+
             if self.current_token.type in EXPRESSION_CLOSERS_NAMES:
                 validator.register_advancement()
                 self.advance()
+
             else:
                 argument = validator.register(self.expression())
                 arguments.append(argument)
@@ -379,10 +380,9 @@ class Parser:
                 validator.register_advancement()
                 self.advance()
 
-            callable_node = CallableNode(atom, arguments)
-            validator.success(callable_node)
+            validator.success(CallableNode(atom, arguments))
 
-        validator.success(atom)
+        return validator.success(atom)
 
     def power(self):
         return self.binary_operation(self.call, POWER_NAMES, self.factor)
@@ -455,8 +455,7 @@ class Parser:
             variable_node = VariableAssignNode(variable_name, expression)
             return result.success(variable_node)
 
-        operation_result = self.binary_operation(self.comparison_expression, EXPRESSION_NAMES)
-        node = result.register(operation_result)
+        node = result.register(self.binary_operation(self.comparison_expression, EXPRESSION_NAMES))
 
         if result.error:
             error_message = f"Expected {Digit.INT.value}, {Digit.FLOAT.value}, {InWords.IDENTIFIER.name}, {InWords.VAR.name}, {ArithmeticOperator.PLUS.value}, {ArithmeticOperator.MINUS.value} or {Punctuation.LEFT_PARENTHESIS.value}"
@@ -495,7 +494,7 @@ class Parser:
         validator = ParserValidator()
         elements = []
         #TODO check if its a start position arg or a get position
-        start_position = self.current_token.start_position.get_position()
+        start_position = self.current_token.start_position.get_copy()
 
         if self.current_token.type != Punctuation.LEFT_SQUARE.name:
             error = InvalidSyntaxError(f"Expected {Punctuation.LEFT_SQUARE.value}",
@@ -529,6 +528,9 @@ class Parser:
                 argument = validator.register(self.expression())
                 argument.append(argument)
 
+                if validator.error:
+                    return validator
+
             if self.current_token.type not in LIST_CLOSERS_NAMES:
                 error = InvalidSyntaxError(f"Expected {Punctuation.COMMA.value} or {LIST_CLOSERS}",
                                            self.current_token.start_position,
@@ -548,7 +550,7 @@ class Parser:
         else_case = None
 
         if not self.current_token.matches(InWords.KEYWORDS.name, 'IF'):
-            error = InvalidSyntaxError("Expected 'IF'", self.current_token.start_position, self.current_token.end_position) #why not copy?
+            error = InvalidSyntaxError("Expected 'IF'", self.current_token.start_position, self.current_token.end_position)
             return result.failure(error)
 
         result.register_advancement()
@@ -560,7 +562,7 @@ class Parser:
             return result
 
         if not self.current_token.matches(InWords.KEYWORDS.name, 'THEN'):
-            error = InvalidSyntaxError("Expected 'THEN'", self.current_token.start_position, self.current_token.end_position) #why not copy?
+            error = InvalidSyntaxError("Expected 'THEN'", self.current_token.start_position, self.current_token.end_position)
             return result.failure(error)
 
         result.register_advancement()

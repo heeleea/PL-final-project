@@ -51,7 +51,7 @@ class LexicalAnalysis:
                         tokens.append(token)
 
                 else:
-                    start_position = self.char_position.get_position()
+                    start_position = self.char_position.get_copy()
                     char = self.current_char
                     self.proceed()
 
@@ -81,7 +81,7 @@ class LexicalAnalysis:
         return self.simple_token_handler, enum_class, token_type
 
     def simple_token_handler(self, enum_class, token_type):
-        start_position = self.char_position.get_position()
+        start_position = self.char_position.get_copy()
         self.proceed()
         token = Token(token_type=enum_class[token_type.name].name,
                       start_position=start_position,
@@ -102,7 +102,7 @@ class LexicalAnalysis:
     def detect_number_type(self):
         number_string = ''
         dot_count = 0
-        start_position = self.char_position.get_position()
+        start_position = self.char_position.get_copy()
 
         while self.current_char is not None and (self.current_char.isdigit() or self.current_char == '.'):
             if self.current_char == '.':
@@ -132,7 +132,7 @@ class LexicalAnalysis:
 
     def detect_identifier(self):
         identifier_str = ''
-        start_position = self.char_position.get_position()
+        start_position = self.char_position.get_copy()
 
         while self.current_char is not None and (self.current_char.isalnum() or self.current_char == '_'):
             identifier_str += self.current_char
@@ -146,7 +146,7 @@ class LexicalAnalysis:
         return token
 
     def detect_not_equals(self):
-        start_position = self.char_position.get_position()
+        start_position = self.char_position.get_copy()
         self.proceed()
 
         if self.current_char == '=':
@@ -161,7 +161,7 @@ class LexicalAnalysis:
 
     def detect_comparison(self):
         token_type = OperatorPrefix.EQUALS
-        start_position = self.char_position.get_position()
+        start_position = self.char_position.get_copy()
         self.proceed()
 
         if self.current_char == '=':
@@ -177,7 +177,7 @@ class LexicalAnalysis:
     def detect_string(self):
         string = ''
         token_type = InWords.STRING
-        start_position = self.char_position.get_position()
+        start_position = self.char_position.get_copy()
         escape_character = False
         self.proceed()
 
@@ -205,13 +205,14 @@ class LexicalAnalysis:
         self.proceed()
         
         token = Token(token_type=token_type.name,
+                      value=string,
                       start_position=start_position,
                       end_position=self.char_position)
         return token
 
     def detect_less_than(self):
         token_type = OperatorPrefix.LESS_THAN
-        start_position = self.char_position.get_position()
+        start_position = self.char_position.get_copy()
         self.proceed()
 
         if self.current_char == OperatorPrefix.EQUALS.value:
@@ -225,7 +226,7 @@ class LexicalAnalysis:
 
     def detect_greater_than(self):
         token_type = OperatorPrefix.GREATER_THAN
-        start_position = self.char_position.get_position()
+        start_position = self.char_position.get_copy()
         self.proceed()
 
         if self.current_char == OperatorPrefix.EQUALS.value:

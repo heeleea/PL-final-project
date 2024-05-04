@@ -19,7 +19,7 @@ class Position:
 
         return self
 
-    def get_position(self):
+    def get_copy(self):
         return Position(self.index, self.line, self.column, self.file_name, self.file_text)
 
 
