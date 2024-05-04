@@ -1,33 +1,11 @@
 from error import InvalidSyntaxError
 from token_utils import Digit, ArithmeticOperator, Punctuation, Utils, InWords, ComparisonOperator
-from ast_nodes import NumberNode, StringNode, ListNode, BinaryOperationNode, UnaryOperationNode, VariableAccessNode, VariableAssignNode, IfNode, ForNode, WhileNode, FunctionDefinitionNode, CallableNode
-
-
-NUMBER_TYPES = {Digit.INT.value, Digit.FLOAT.value}
-STRING_TYPES = {InWords.STRING.value}
-
-ADDITIVE_OPERATORS = {ArithmeticOperator.PLUS.value, ArithmeticOperator.MINUS.value}
-MULTIPLICATIVE_OPERATORS = {ArithmeticOperator.MULTIPLY.value, ArithmeticOperator.DIVIDE.value}
-EXPRESSION_STARTERS = {Punctuation.LEFT_PARENTHESIS.value}
-EXPRESSION_CLOSERS = {Punctuation.RIGHT_PARENTHESIS.value}
-LIST_STARTERS = {Punctuation.LEFT_SQUARE.value}
-LIST_CLOSERS = {Punctuation.RIGHT_SQUARE.value}
-IDENTIFIERS = {}
-COMPARISON_EXPRESSION = {ComparisonOperator.AND.value, ComparisonOperator.OR.value}
-
-ADDITIVE_OPERATORS_NAMES = {ArithmeticOperator.PLUS.name, ArithmeticOperator.MINUS.name}
-MULTIPLICATIVE_OPERATORS_NAMES = {ArithmeticOperator.MULTIPLY.name, ArithmeticOperator.DIVIDE.name}
-EXPRESSION_STARTERS_NAMES = {Punctuation.LEFT_PARENTHESIS.name}
-EXPRESSION_CLOSERS_NAMES = {Punctuation.RIGHT_PARENTHESIS.name}
-LIST_STARTERS_NAMES = {Punctuation.LEFT_SQUARE.name}
-LIST_CLOSERS_NAMES = {Punctuation.RIGHT_SQUARE.name}
-IDENTIFIERS_NAMES = {InWords.IDENTIFIER.name}
-EXPRESSION_NAMES = {(InWords.KEYWORDS.name, ComparisonOperator.AND.value), (InWords.KEYWORDS.name, ComparisonOperator.OR.value)}
-COMPARISON_EXPRESSION_NAMES = {ComparisonOperator.COMPARISON.name, ComparisonOperator.NOT_EQUALS.name, ComparisonOperator.LESS_THAN.name,
-                               ComparisonOperator.GREATER_THAN.name, ComparisonOperator.LESS_THAN_EQUALS.name, ComparisonOperator.GREATER_THAN_EQUALS.name}
-ARITHMETIC_NAMES = {ArithmeticOperator.PLUS.name, ArithmeticOperator.MINUS.name}
-POWER_NAMES = {ArithmeticOperator.POWER.name, }
-LOOP_NAMES = {InWords.FOR.name, InWords.WHILE.name}
+from ast_nodes import NumberNode, StringNode, ListNode, BinaryOperationNode, UnaryOperationNode, VariableAccessNode, \
+    VariableAssignNode, IfNode, ForNode, WhileNode, FunctionDefinitionNode, CallableNode
+from constans.parsing_rules import NUMBER_TYPES, STRING_TYPES, EXPRESSION_STARTERS, EXPRESSION_CLOSERS, LIST_CLOSERS, \
+    LIST_STARTERS_NAMES, LIST_CLOSERS_NAMES, EXPRESSION_NAMES, EXPRESSION_STARTERS_NAMES, EXPRESSION_CLOSERS_NAMES, \
+    IDENTIFIERS_NAMES, COMPARISON_EXPRESSION_NAMES, ADDITIVE_OPERATORS_NAMES, MULTIPLICATIVE_OPERATORS_NAMES, \
+    ARITHMETIC_NAMES, POWER_NAMES, LOOP_NAMES
 
 
 class Parser:
@@ -129,7 +107,7 @@ class Parser:
         #TODO edit the error message including any sign missed, also in expression, and so on
         error_message = f"Expected {Digit.INT.value}, {Digit.FLOAT.value}, {InWords.IDENTIFIER.name}, {ArithmeticOperator.PLUS.value}, {ArithmeticOperator.MINUS.value} or {Punctuation.LEFT_PARENTHESIS.value}," \
                         f"{InWords.IF.name}, {InWords.FOR.name}, {InWords.WHILE.name}, {InWords.FUNC.name}"
-        error = InvalidSyntaxError(error_message, token.start_position, token.end_position)  # end = self.current_token.end_position
+        error = InvalidSyntaxError(error_message, token.start_position, token.end_position) 
         return result.failure(error)
 
     def loop_handlers_factory(self, loop):
@@ -366,7 +344,7 @@ class Parser:
                     self.advance()
 
                     argument = validator.register(self.expression())
-                    argument.append(argument)
+                    arguments.append(argument)
 
                     if validator.error:
                         return validator
@@ -380,7 +358,7 @@ class Parser:
                 validator.register_advancement()
                 self.advance()
 
-            validator.success(CallableNode(atom, arguments))
+            return validator.success(CallableNode(atom, arguments))
 
         return validator.success(atom)
 

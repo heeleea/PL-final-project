@@ -1,5 +1,5 @@
 from token_utils import Token
-from typing import List
+from typing import List, Union
 
 
 class BasicPosition:

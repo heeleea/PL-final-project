@@ -157,7 +157,7 @@ class LexicalAnalysis:
             return token, None
 
         self.proceed()
-        return None, ExpectedCharError(start_position, self.char_position, "'=' (after '!')")
+        return None, ExpectedCharError("'=' (after '!')", start_position, self.char_position)
 
     def detect_comparison(self):
         token_type = OperatorPrefix.EQUALS
@@ -186,11 +186,22 @@ class LexicalAnalysis:
             't': '\t'
         }
 
-        while self.current_char is not None and \
-                (self.current_char is not Punctuation.STRING.value or escape_character):
+        while self.current_char is not None:
 
             if escape_character:
                 string += escape_characters.get(self.current_char, self.current_char)
+                escape_character = False
+
+            elif self.current_char == '\\':
+                escape_character = True
+
+            elif self.current_char == Punctuation.STRING.value:
+                self.proceed()
+                token = Token(token_type=token_type.name,
+                              value=string,
+                              start_position=start_position,
+                              end_position=self.char_position)
+                return token, None
 
             else:
                 if self.current_char == '\\':
@@ -200,7 +211,6 @@ class LexicalAnalysis:
                     string += self.current_char
 
             self.proceed()
-            escape_character = False
 
         self.proceed()
         

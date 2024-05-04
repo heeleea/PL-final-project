@@ -1,9 +1,10 @@
 from typing import Union
-from token_utils import ArithmeticOperator, ComparisonOperator, InWords
-from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, StringNode,  BasicPosition, VariableAccessNode, VariableAssignNode, IfNode, ForNode, WhileNode, FunctionDefinitionNode, CallableNode, ListNode
-from error import CostumedRunTimeError
+
 from context import Context
 from symbol_table import SymbolTable
+from error import CostumedRunTimeError
+from token_utils import ArithmeticOperator, ComparisonOperator, InWords
+from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, StringNode,  BasicPosition, VariableAccessNode, VariableAssignNode, IfNode, ForNode, WhileNode, FunctionDefinitionNode, CallableNode, ListNode
 
 
 class Value(BasicPosition):
@@ -439,8 +440,9 @@ class SemanticalAnalysis:
 
     @staticmethod
     def transverse_string(node: StringNode, context):
+        validator = RuntimeValidator()
         string = String(node.token.value).set_context(context)
-        return RuntimeValidator().success(string)
+        return validator.success(string)
 
     def transverse_error(self, node, context):
         # TODO: raising an exception
@@ -501,7 +503,7 @@ class SemanticalAnalysis:
             condition = lambda: iteration > end_value.value
 
         while condition():
-            context.symbol_table.set(node.token.value, Number(iteration)) #node.variable_name
+            context.symbol_table.set(node.token.value, Number(iteration))
             iteration += step_value.value
 
             element = validator.register(self.transverse(node.loop_body, context))
@@ -538,7 +540,7 @@ class SemanticalAnalysis:
         returned_list.set_position(node.start_position, node.end_position)
         return validator.success(returned_list)
 
-    def transverse_list_node(self,node: ListNode, context):
+    def transverse_list_node(self, node: ListNode, context):
         validator = RuntimeValidator()
         elements = []
 

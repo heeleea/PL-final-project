@@ -1,8 +1,8 @@
 import pytest
 
-from error import IllegalCharError
 from tests.test_utils import FILE_NAME
 from lexical_analysis import LexicalAnalysis
+from error import IllegalCharError, ExpectedCharError
 from token_utils import Digit, ArithmeticOperator, Utils, ComparisonOperator, InWords, Punctuation, Token
 
 
@@ -103,7 +103,7 @@ def test_detect_inwords(input, expected):
     (']', Punctuation.RIGHT_SQUARE.name),
     (',', Punctuation.COMMA.name),
     ('~', Punctuation.FUNCTION_ASSIGNMENT.name),
-    ('"', Punctuation.STRING.name)
+    ('""', Punctuation.STRING.name)
 ])
 def test_detect_punctuation(input,expected):
     lexer = LexicalAnalysis(input, FILE_NAME)
@@ -171,4 +171,14 @@ def test_detect_illegal_char(input):
     assert isinstance(error, IllegalCharError)
     assert error.details == f"'{input}'"
 
-#TODO test strings, double quotes
+
+@pytest.mark.parametrize("input,expected", [
+    ('"some text', "\" is missing at the end of the string"),  # negative testing for detect string
+    ('!', "'=' (after '!')")  # negative testing for detect not equals
+])
+def test_expected_char_error(input, expected):
+    lexer = LexicalAnalysis(input, FILE_NAME)
+    tokens, error = lexer.create_token_stream()
+
+    assert isinstance(error, ExpectedCharError)
+    assert error.details == expected
