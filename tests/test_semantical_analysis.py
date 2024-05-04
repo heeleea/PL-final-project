@@ -29,7 +29,7 @@ def test_arithmetic_operators(expression, expected):
     assert result.value == expected
 
 
-@pytest.mark.parametrize('expression, expected', [
+@pytest.mark.parametrize('expression,expected', [
     ('1 == 1', 1),
     ('1 == 2', 0),
     ('1 != 2', 1),
@@ -48,7 +48,7 @@ def test_comparison_operators(expression, expected):
     assert result.value == expected
 
 
-@pytest.mark.parametrize('expression, expected', [
+@pytest.mark.parametrize('expression,expected', [
     ('TRUE AND FALSE', 0),
     ('TRUE AND TRUE', 1),
     ('FALSE AND FALSE', 0),
@@ -62,3 +62,11 @@ def test_logical_operators(expression, expected, setup_env):
     assert result.value == expected
 
 
+@pytest.mark.parametrize('expression,expected', [
+    ('"Hello " * 3', "Hello Hello Hello "),
+    # ('"string part 1" + " and string part 2"', "string part 1 and string part 2"),
+    # ('"im a string"', "im a string")
+])
+def test_stings_operations(expression, expected):
+    result, error = run(expression, FILE_NAME)
+    assert result.value == expected

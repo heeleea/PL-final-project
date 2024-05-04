@@ -214,7 +214,6 @@ class LexicalAnalysis:
 
             self.proceed()
 
-        #self.proceed() #is that neccesary?
 
         error = ExpectedCharError("\" is missing at the end of the string",
                                   start_position,
