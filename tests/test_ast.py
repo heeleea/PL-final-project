@@ -7,7 +7,7 @@ from tests.test_utils import FILE_NAME
 from lexical_analysis import LexicalAnalysis
 from semantical_analysis import SemanticalAnalysis, Number
 from token_utils import ArithmeticOperator, InWords, ComparisonOperator
-from ast_nodes import NumberNode, BinaryOperationNode, UnaryOperationNode, VariableAssignNode, IfNode, ForNode, WhileNode, VariableAccessNode, FunctionDefinitionNode, CallableNode, StringNode
+from ast_nodes import NumberNode, BinaryOperationNode, UnaryOperationNode, VariableAssignNode, IfNode, ForNode, WhileNode, VariableAccessNode, FunctionDefinitionNode, CallableNode, StringNode, ListNode
 
 
 def test_number_node_creation():
@@ -220,6 +220,16 @@ def test_string_node():
     assert ast.node.token.value == string
 
 
+def test_list_node():
+    lexer = LexicalAnalysis("[1,2,3]", FILE_NAME)
+    tokens, _ = lexer.create_token_stream()
+
+    parse = Parser(tokens)
+    ast = parse.create_ats()
+
+    assert isinstance(ast.node, ListNode)
+
+
 @pytest.mark.parametrize("input", [
     "1 +",  # Missing operand
     "(",  # Unbalanced parenthesis
@@ -241,5 +251,3 @@ def test_parser_errors(input):
     ast = parser.create_ats()
 
     assert ast.error is not None, "Expected an error but got none."
-
-

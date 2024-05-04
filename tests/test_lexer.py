@@ -105,7 +105,7 @@ def test_detect_inwords(input, expected):
     ('~', Punctuation.FUNCTION_ASSIGNMENT.name),
     ('""', Punctuation.STRING.name)
 ])
-def test_detect_punctuation(input,expected):
+def test_detect_punctuation(input, expected):
     lexer = LexicalAnalysis(input, FILE_NAME)
     tokens, error = lexer.create_token_stream()
 
@@ -126,6 +126,8 @@ def test_detect_punctuation(input,expected):
     ('FUNC add(a,b) ~ a + b', 12, [(InWords.FUNC.value, InWords.KEYWORDS.name), ('add', InWords.IDENTIFIER.name), (None, Punctuation.LEFT_PARENTHESIS.name),
                                    ('a', InWords.IDENTIFIER.name), (None, Punctuation.COMMA.name), ('b', InWords.IDENTIFIER.name), (None, Punctuation.RIGHT_PARENTHESIS.name),
                                    (None, Punctuation.FUNCTION_ASSIGNMENT.name), ('a', InWords.IDENTIFIER.name), (None, ArithmeticOperator.PLUS.name), ('b', InWords.IDENTIFIER.name), (None, Utils.END.name)]),
+    ('[]', 3, [(None, Punctuation.LEFT_SQUARE.name), (None, Punctuation.RIGHT_SQUARE.name), (None, Utils.END.name)]),
+    ('[1,2,3]', 8, [(None, Punctuation.LEFT_SQUARE.name), (1, Digit.INT.name), (None, Punctuation.COMMA.name), (2, Digit.INT.name), (None, Punctuation.COMMA.name), (3, Digit.INT.name), (None, Punctuation.RIGHT_SQUARE.name), (None, Utils.END.name)])
 ])
 def test_create_token_stream(text, length, expected):
     lexer = LexicalAnalysis(text, FILE_NAME)
@@ -169,3 +171,4 @@ def test_expected_char_error(input, expected):
 
     assert isinstance(error, ExpectedCharError)
     assert error.details == expected
+

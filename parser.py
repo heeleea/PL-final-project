@@ -65,18 +65,16 @@ class Parser:
                 self.advance()
                 return result.success(expression)
 
-            elif token.type in LIST_STARTERS_NAMES:
-                list_expression = result.register(self.list_expression())
-
-                if result.error:
-                    return result
-
-                return result.success(list_expression)
-
             else:
                 error_message = f"Expected {Punctuation.RIGHT_PARENTHESIS.value}"
                 error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
                 return result.failure(error)
+
+        elif token.type in LIST_STARTERS_NAMES:
+            list_expression = result.register(self.list_expression())
+            if result.error:
+                return result
+            return result.success(list_expression)
 
         elif token.matches(InWords.KEYWORDS.name, 'IF'):
             if_expression = result.register(self.if_expression())
@@ -503,8 +501,8 @@ class Parser:
                 validator.register_advancement()
                 self.advance()
 
-                argument = validator.register(self.expression())
-                argument.append(argument)
+                element = validator.register(self.expression())
+                elements.append(element)
 
                 if validator.error:
                     return validator
@@ -520,7 +518,7 @@ class Parser:
 
         list_node = ListNode(elements)
         list_node.set_position(start_position, self.current_token.end_position)
-        return list_node
+        return validator.success(list_node)
 
     def if_expression(self):
         result = ParserValidator()

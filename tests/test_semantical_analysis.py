@@ -1,6 +1,6 @@
 import pytest
 
-from semantical_analysis import Number
+from semantical_analysis import Number, List
 from symbol_table import SymbolTable
 from test_utils import FILE_NAME
 from run import run
@@ -70,3 +70,27 @@ def test_logical_operators(expression, expected, setup_env):
 def test_stings_operations(expression, expected):
     result, error = run(expression, FILE_NAME)
     assert result.value == expected
+
+
+@pytest.mark.parametrize("expression,instance,expected", [
+    ("[1,2,3] + 4", List, (1, 2, 3, 4)),
+    ("[1,2,3] * [3,4,5]", List, (1, 2, 3, 3, 4, 5)),
+    ("[1,2,3] - 1", List, (1, 3)),
+    ("[1,2,3] - 0", List, (2, 3)),
+    ("[1,2,3] - -1", List, (1, 2)),
+    ("[1,2,3] - -2", List, (1, 3)),
+    ("[1,2,3] / 0", Number, 1),
+    ("[1,2,3] / 1", Number, 2),
+    ("[1,2,3] / -1", Number,  3)
+])
+def test_list_operations(expression, instance, expected):
+    result, error = run(expression, FILE_NAME)
+    assert isinstance(result, instance)
+
+    if isinstance(result, List):
+        for i in range(len(expected)):
+            assert isinstance(result.elements[i], Number)
+            assert result.elements[i].value == expected[i]
+
+    elif isinstance(result, Number):
+        assert result.value == expected
