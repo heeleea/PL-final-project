@@ -61,3 +61,4 @@ def test_logical_operators(expression, expected, setup_env):
     result, error = run(expression, FILE_NAME)
     assert result.value == expected
 
+

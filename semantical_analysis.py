@@ -596,7 +596,6 @@ class SemanticalAnalysis:
 
         return validator.success(return_value)
 
-
     @staticmethod
     def operator_handler_factory(token_type, node):
         operators = {
