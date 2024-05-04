@@ -1,3 +1,4 @@
+import math
 import os
 
 from typing import Union
@@ -196,6 +197,12 @@ class Number(Value):
         return str(self.value)
 
 
+Number.null = Number(0)
+Number.false = Number(0)
+Number.true = Number(1)
+Number.math_PI = Number(math.pi)
+
+
 class List(Value):
     def __init__(self, elements):
         super().__init__()
@@ -250,49 +257,83 @@ class List(Value):
             return None, Value.illegal_operation(self, index)
 
     def get_copy(self):
-        copied_list = List(self.elements[:])
+        copied_list = List(self.elements)
         copied_list.set_position((self.start_position, self.end_position))
         copied_list.set_context(self.context)
         return copied_list
+
+    def __str__(self):
+        return ', '.join(map(str, self.elements))
 
     def __repr__(self):
         return f"[{', '.join(map(str, self.elements))}]"
 
 
-class Function(Value):
-    def __init__(self, name, arguments, body):
+class BaseFunction(Value):
+    def __init__(self, name):
         super().__init__()
         self.name = name or "<anonymous>"
+
+    def generate_new_context(self):
+        new_context = Context(self.name, self.context, self.start_position)
+        new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
+        return new_context
+
+    def check_args(self, arguments, args):
+
+        validator = RuntimeValidator()
+
+        if len(args) > len(arguments):
+            error = CostumedRunTimeError(f"{len(args) - len(arguments)} too many args passed into '{self.name}'",
+                                         self.start_position,
+                                         self.start_position,
+                                         self.context)
+            return validator.failure(error)
+
+        if len(args) < len(arguments):
+            error = CostumedRunTimeError(f"{len(arguments) - len(args)} too few args passed into '{self.name}'",
+                                         self.start_position,
+                                         self.end_position,
+                                         self.context)
+            return validator.failure(error)
+
+        return validator.success(None)
+
+    def populate_args(self, arguments, args, execution_context):
+        for i in range(len(args)):
+            arg_name = arguments[i]
+            arg_value = args[i]
+            arg_value.set_context(execution_context)
+            execution_context.symbol_table.set(arg_name, arg_value)
+
+    def check_and_populate_args(self, arguments, args, execution_context):
+        validator = RuntimeValidator()
+        validator.register(self.check_args(arguments, args))
+
+        if validator.error:
+            return validator
+
+        self.populate_args(arguments, args, execution_context)
+
+        return validator.success(None)
+
+
+class Function(BaseFunction):
+    def __init__(self, name, arguments, body):
+        super().__init__(name)
         self.arguments = arguments
         self.body = body
 
     def execute(self, args):
         validator = RuntimeValidator()
         semantical_analysis = SemanticalAnalysis()
-        new_context = Context(self.name, self.context, self.start_position)
-        new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
+        execution_context = self.generate_new_context()
 
-        if len(args) > len(self.arguments):
-            error = CostumedRunTimeError(f"{len(args) - len(self.arguments)} too many args passed into '{self.name}'",
-                                         self.start_position,
-                                         self.start_position,
-                                         self.context)
-            return validator.failure(error)
+        validator.register(self.check_and_populate_args(self.arguments, args, execution_context))
+        if validator.error:
+            return validator
 
-        if len(args) < len(self.arguments):
-            error = CostumedRunTimeError(f"{len(self.arguments) - len(args)} too few args passed into '{self.name}'",
-                                         self.start_position,
-                                         self.end_position,
-                                         self.context)
-            return validator.failure(error)
-
-        for i in range(len(args)):
-            arg_name = self.arguments[i]
-            arg_value = args[i]
-            arg_value.set_context(new_context)
-            new_context.symbol_table.set(arg_name, arg_value)
-
-        value = validator.register(semantical_analysis.transverse(self.body, new_context))
+        value = validator.register(semantical_analysis.transverse(self.body, execution_context))
         if validator.error: return validator
         return validator.success(value)
 
@@ -495,8 +536,6 @@ BuiltInFunctions.pop = BuiltInFunctions("pop")
 BuiltInFunctions.extend = BuiltInFunctions("extend")
 
 
-# stopped at 11:54
-
 class String(Value):
     def __init__(self, value):
         super().__init__()
@@ -529,6 +568,9 @@ class String(Value):
         copy.set_context(self.context)
         copy.set_position(self.start_position, self.end_position)
         return copy
+
+    def __str__(self):
+        return self.value
 
     def __repr__(self):
         return f'"{self.value}"'
@@ -572,6 +614,7 @@ class SemanticalAnalysis:
 
         value = value.get_copy()
         value.set_position(node.start_position, node.end_position)
+        value.set_context(context)
         return validator.success(value)
 
     def transverse_variable_assign_node(self, node, context):
@@ -791,6 +834,9 @@ class SemanticalAnalysis:
         if validator.error:
             return validator
 
+        return_value = return_value.copy()
+        return_value.set_position(node.start_position,node.end_position)
+        return_value.set_context(context)
         return validator.success(return_value)
 
     @staticmethod
