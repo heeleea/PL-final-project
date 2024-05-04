@@ -6,9 +6,9 @@ from symbol_table import SymbolTable
 
 
 global_symbol_table = SymbolTable()
-global_symbol_table.set("TRUE", Number(1))
-global_symbol_table.set("FALSE", Number(0))
-global_symbol_table.set("NULL", Number(0))
+global_symbol_table.set("TRUE", Number.true)
+global_symbol_table.set("FALSE", Number.false)
+global_symbol_table.set("NULL", Number.null)
 
 
 def run(input, file_name):

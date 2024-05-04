@@ -228,6 +228,7 @@ def test_list_node():
     ast = parse.create_ats()
 
     assert isinstance(ast.node, ListNode)
+    assert isinstance(ast.node.element_node, list)
 
 
 @pytest.mark.parametrize("input", [

@@ -1,3 +1,5 @@
+import os
+
 from typing import Union
 
 from context import Context
@@ -82,6 +84,7 @@ class Value(BasicPosition):
 
 
 class Number(Value):
+
     def __init__(self, value):
         super().__init__()
         self.value = value
@@ -302,6 +305,197 @@ class Function(Value):
     def __repr__(self):
         return f"<function {self.name}>"
 
+
+class BuiltInFunctions(BaseFunction):
+    def __init__(self, name):
+        super().__init__(name)
+
+    def execute(self, arguments):
+        validator = RuntimeValidator()
+        execution_context = self.generate_new_context()
+
+        method_name = f'execute_{self.name}'
+        method = getattr(self, method_name, self.method_not_found)
+
+        validator.register(self.check_and_populate_args(method.arg_names, arguments, execution_context))
+        if validator.error:
+            return validator
+
+        return_value = validator.register(method(execution_context))
+        if validator.error:
+            return validator
+
+        return validator.success(return_value)
+    
+    def get_copy(self):
+        copy = BuiltInFunctions(self.name)
+        copy.set_context(self.context)
+        copy.set_position(self.start_position, self.end_position)
+        return copy
+
+    def __repr__(self):
+        return f"<built-in function {self.name}>"
+
+    @staticmethod
+    def execute_print(execution_context):
+        validator = RuntimeValidator()
+        value = execution_context.symbol_table.get('value')
+        print(str(value))
+        return validator.success(Number.null)
+    execute_print.arg_names = ['value']
+
+    @staticmethod
+    def execute_print(execution_context):
+        validator = RuntimeValidator()
+        value = execution_context.symbol_table.get('value')
+        return validator.success(String(str(value)))
+    execute_print.arg_names = ['value']
+
+    @staticmethod
+    def execute_input(execution_context):
+        validator = RuntimeValidator()
+        text = input()
+        return validator.success(String(text))
+    execute_input.arg_names = []
+
+    @staticmethod
+    def execute_input_int(execution_context):
+        validator = RuntimeValidator()
+        no_number = True
+        number = None
+
+        while no_number:
+            text = input()
+
+            try:
+                number = int(text)
+                no_number = False
+
+            except ValueError:
+                print(f"'{text}' must be an integer. Try Again!")
+
+        return validator.success(Number(number))
+    execute_input.arg_names = []
+
+    @staticmethod
+    def execute_clear(execution_context):
+        validator = RuntimeValidator()
+        os_name = os.name
+        os.system('cls') if os_name == 'nt' else os.system('clear')
+        return validator.success(Number.null)
+    execute_clear.arg_names = []
+
+    @staticmethod
+    def execute_is_number(execution_context):
+        validator = RuntimeValidator()
+        value = execution_context.symbol_table.get('value')
+        is_number = isinstance(value, Number)
+        result = Number.true if is_number else Number.false
+        validator.success(result)
+    execute_is_number.arg_names = ['value']
+
+    @staticmethod
+    def execute_is_string(execution_context):
+        validator = RuntimeValidator()
+        value = execution_context.symbol_table.get('value')
+        is_string = isinstance(value, String)
+        result = Number.true if is_string else Number.false
+        validator.success(result)
+    execute_is_string.arg_names = ['value']
+
+    @staticmethod
+    def execute_is_list(execution_context):
+        validator = RuntimeValidator()
+        value = execution_context.symbol_table.get('value')
+        is_list = isinstance(value, List)
+        result = Number.true if is_list else Number.false
+        validator.success(result)
+    execute_is_list.arg_names = ['value']
+
+    @staticmethod
+    def execute_is_function(execution_context):
+        validator = RuntimeValidator()
+        value = execution_context.symbol_table.get('value')
+        is_function = isinstance(value, BaseFunction)
+        result = Number.true if is_function else Number.false
+        validator.success(result)
+    execute_is_function.arg_names = ['value']
+
+    def execute_append(self, execution_context):
+        validator = RuntimeValidator()
+
+        list_ = execution_context.symbol_table.get('list')
+        value = execution_context.symbol_table.get('value')
+
+        if not isinstance(list_, List):
+            error = CostumedRunTimeError("First argument must be a list", self.start_position, self.end_position, execution_context)
+            return validator.failure(error)
+
+        list_.elements.append(value)
+        return validator.success(Number.null)
+    execute_append.arg_names = ['list', 'value']
+
+    def execute_pop(self, execution_context):
+        validator = RuntimeValidator()
+
+        list_ = execution_context.symbol_table.get('list')
+        index = execution_context.symbol_table.get('index')
+
+        if not isinstance(list_, List):
+            error = CostumedRunTimeError("First argument must be a list", self.start_position, self.end_position, execution_context)
+            return validator.failure(error)
+
+        if not isinstance(index, Number):
+            error = CostumedRunTimeError("Second argument must be a number", self.start_position, self.end_position, execution_context)
+            return validator.failure(error)
+
+        try:
+            element = list_.elements.pop(index.value)
+        except IndexError:
+            error = CostumedRunTimeError("Index is out of bound", self.start_position, self.end_position, execution_context)
+            return validator.failure(error)
+
+        return validator.success(element)
+    execute_pop.arg_names = ['list', 'index']
+
+    def execute_extend(self, execution_context):
+        validator = RuntimeValidator()
+
+        list_a = execution_context.symbol_table.get('list_a')
+        list_b = execution_context.symbol_table.get('list_b')
+
+        if not isinstance(list_a, List):
+            error = CostumedRunTimeError("First argument must be a list", self.start_position, self.end_position, execution_context)
+            return validator.failure(error)
+
+        if not isinstance(list_b, List):
+            error = CostumedRunTimeError("Second argument must be a list", self.start_position, self.end_position, execution_context)
+            return validator.failure(error)
+
+        list_a.elements.extend(list_b.elements)
+        return validator.success(Number.null)
+
+    execute_extend.arg_names = ['list_a', 'list_b']
+
+    def method_not_found(self, node, context):
+        raise Exception(f"Method {self.name} is not defined")
+
+
+BuiltInFunctions.print = BuiltInFunctions("print")
+BuiltInFunctions.print_return = BuiltInFunctions("print_return")
+BuiltInFunctions.input = BuiltInFunctions("input")
+BuiltInFunctions.input_int = BuiltInFunctions("input_int")
+BuiltInFunctions.clear = BuiltInFunctions("clear")
+BuiltInFunctions.is_number = BuiltInFunctions("is_number")
+BuiltInFunctions.is_string = BuiltInFunctions("is_string")
+BuiltInFunctions.is_list = BuiltInFunctions("is_list")
+BuiltInFunctions.is_function = BuiltInFunctions("is_function")
+BuiltInFunctions.append = BuiltInFunctions("append")
+BuiltInFunctions.pop = BuiltInFunctions("pop")
+BuiltInFunctions.extend = BuiltInFunctions("extend")
+
+
+# stopped at 11:54
 
 class String(Value):
     def __init__(self, value):

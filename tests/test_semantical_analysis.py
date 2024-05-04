@@ -94,3 +94,12 @@ def test_list_operations(expression, instance, expected):
 
     elif isinstance(result, Number):
         assert result.value == expected
+
+
+def test_loop_with_list():
+    text = "FOR i=1 TO 9 THEN 2^i"
+    result, error = run(text, FILE_NAME)
+
+    for i in range(8):
+        assert isinstance(result.elements[i], Number)
+        assert result.elements[i].value == pow(2, i+1)
