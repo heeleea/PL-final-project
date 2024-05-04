@@ -64,8 +64,8 @@ def test_logical_operators(expression, expected, setup_env):
 
 @pytest.mark.parametrize('expression,expected', [
     ('"Hello " * 3', "Hello Hello Hello "),
-    # ('"string part 1" + " and string part 2"', "string part 1 and string part 2"),
-    # ('"im a string"', "im a string")
+    ('"string part 1" + " and string part 2"', "string part 1 and string part 2"),
+    ('"im a string"', "im a string")
 ])
 def test_stings_operations(expression, expected):
     result, error = run(expression, FILE_NAME)

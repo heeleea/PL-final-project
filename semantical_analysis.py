@@ -319,7 +319,10 @@ class String(Value):
     def multiplied_by(self, number):
 
         if isinstance(number, Number):
-            return String(self.value * number.value).set_context(self.context), None
+            new_string_value = self.value * number.value
+            new_string = String(new_string_value)
+            new_string.set_context().set_context(self.context)
+            return new_string, None
 
         else:
             return None, Value.illegal_operation(self, number)
@@ -597,23 +600,40 @@ class SemanticalAnalysis:
         return validator.success(return_value)
 
     @staticmethod
-    def operator_handler_factory(token_type, node):
-        operators = {
-            ArithmeticOperator.PLUS.name: node.added_to,
-            ArithmeticOperator.MINUS.name: node.subbed_by,
-            ArithmeticOperator.MULTIPLY.name: node.multiplied_by,
-            ArithmeticOperator.DIVIDE.name: node.divided_by,
-            ArithmeticOperator.POWER.name: node.powered_by,
-            ComparisonOperator.COMPARISON.name: node.equals,
-            ComparisonOperator.NOT_EQUALS.name: node.not_equals,
-            ComparisonOperator.LESS_THAN.name: node.less_than,
-            ComparisonOperator.GREATER_THAN.name: node.greater_than,
-            ComparisonOperator.LESS_THAN_EQUALS.name: node.less_than_equals,
-            ComparisonOperator.GREATER_THAN_EQUALS.name: node.greater_than_equals,
-            ComparisonOperator.AND.name: node.logical_and,
-            ComparisonOperator.OR.name: node.logical_or
-        }
+    def get_operators_by_node(node):
+        if isinstance(node, String):
+            return {
+                ArithmeticOperator.PLUS.name: node.added_to,
+                ArithmeticOperator.MULTIPLY.name: node.multiplied_by
+            }
 
+        elif isinstance(node, List):
+            return {
+                ArithmeticOperator.PLUS.name: node.added_to,
+                ArithmeticOperator.MINUS.name: node.subbed_by,
+                ArithmeticOperator.MULTIPLY.name: node.multiplied_by,
+                ArithmeticOperator.DIVIDE.name: node.divided_by
+            }
+
+        elif isinstance(node, Value):
+            return {
+                ArithmeticOperator.PLUS.name: node.added_to,
+                ArithmeticOperator.MINUS.name: node.subbed_by,
+                ArithmeticOperator.MULTIPLY.name: node.multiplied_by,
+                ArithmeticOperator.DIVIDE.name: node.divided_by,
+                ArithmeticOperator.POWER.name: node.powered_by,
+                ComparisonOperator.COMPARISON.name: node.equals,
+                ComparisonOperator.NOT_EQUALS.name: node.not_equals,
+                ComparisonOperator.LESS_THAN.name: node.less_than,
+                ComparisonOperator.GREATER_THAN.name: node.greater_than,
+                ComparisonOperator.LESS_THAN_EQUALS.name: node.less_than_equals,
+                ComparisonOperator.GREATER_THAN_EQUALS.name: node.greater_than_equals,
+                ComparisonOperator.AND.name: node.logical_and,
+                ComparisonOperator.OR.name: node.logical_or
+            }
+
+    def operator_handler_factory(self, token_type, node):
+        operators = self.get_operators_by_node(node)
         return operators.get(token_type)
 
     def node_handler_factory(self, node):
