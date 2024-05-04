@@ -137,30 +137,17 @@ def test_create_token_stream(text, length, expected):
         assert expected[i][0] == tokens[i].value
 
 
-def test_detect_string():
-    string = "a string to test with"
-    lexer = LexicalAnalysis(f'"{string}"', FILE_NAME)
-    tokens, error = lexer.create_token_stream()
-
-    assert tokens[0].type == InWords.STRING.name
-    assert tokens[0].value == string
-
-
-@pytest.mark.parametrize('first_input,second_input,operation,expected', [
-    ("hello ", "world", ArithmeticOperator.PLUS.value, "hello world"),
-    ("hello ", 3, ArithmeticOperator.MULTIPLY.value, "hello hello hello ")
+@pytest.mark.parametrize("input,expected_string,expected_type", [
+    ("a string to test with", "a string to test with", InWords.STRING.name),
+    ("a string\\nwith\\tescapes", "a string\nwith\tescapes", InWords.STRING.name)
 
 ])
-def test_string_with_operations(first_input, second_input, operation, expected):
-    lexer = LexicalAnalysis(f'"{first_input}{operation}{second_input}"', FILE_NAME)
+def test_detect_string(input, expected_string, expected_type):
+    lexer = LexicalAnalysis(f'"{input}"', FILE_NAME)
     tokens, error = lexer.create_token_stream()
 
-    assert tokens[0].type == InWords.STRING.name
-    assert tokens[0].value == expected
-
-
-def test_string_with_func(first_input):
-    pass
+    assert tokens[0].type == expected_type
+    assert tokens[0].value == expected_string
 
 
 @pytest.mark.parametrize('input', ['$', '@', '#', '%', '&'])

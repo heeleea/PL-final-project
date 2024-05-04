@@ -39,6 +39,13 @@ class LexicalAnalysis:
 
                 tokens.append(token)
 
+            elif self.current_char == Punctuation.STRING.value:
+                token, error = self.detect_string()
+                if error:
+                    return [], error
+
+                tokens.append(token)
+
             else:
                 function, token_type, enum_class = self.token_handlers_factory()
                 if function is not None:
@@ -68,7 +75,6 @@ class LexicalAnalysis:
             OperatorPrefix.EQUALS: self.detect_comparison,
             OperatorPrefix.LESS_THAN: self.detect_less_than,
             OperatorPrefix.GREATER_THAN: self.detect_greater_than,
-            Punctuation.STRING: self.detect_string,
         }
 
         if enum_class is None and token_type is None:
@@ -204,21 +210,17 @@ class LexicalAnalysis:
                 return token, None
 
             else:
-                if self.current_char == '\\':
-                    escape_character = True
-
-                else:
-                    string += self.current_char
+                string += self.current_char
 
             self.proceed()
 
-        self.proceed()
-        
-        token = Token(token_type=token_type.name,
-                      value=string,
-                      start_position=start_position,
-                      end_position=self.char_position)
-        return token
+        #self.proceed() #is that neccesary?
+
+        error = ExpectedCharError("\" is missing at the end of the string",
+                                  start_position,
+                                  self.char_position)
+
+        return None, error
 
     def detect_less_than(self):
         token_type = OperatorPrefix.LESS_THAN

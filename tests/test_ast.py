@@ -241,3 +241,5 @@ def test_parser_errors(input):
     ast = parser.create_ats()
 
     assert ast.error is not None, "Expected an error but got none."
+
+
