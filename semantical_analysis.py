@@ -386,7 +386,7 @@ class BuiltInFunctions(BaseFunction):
     execute_print.arg_names = ['value']
 
     @staticmethod
-    def execute_print(execution_context):
+    def execute_print_return(execution_context):
         validator = RuntimeValidator()
         value = execution_context.symbol_table.get('value')
         return validator.success(String(str(value)))

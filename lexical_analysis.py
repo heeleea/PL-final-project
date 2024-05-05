@@ -248,3 +248,6 @@ class LexicalAnalysis:
                       start_position=start_position,
                       end_position=self.char_position)
         return token
+
+    def detect_end_of_line(self):
+        token_type = InWords.NEWLINE

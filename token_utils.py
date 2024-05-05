@@ -1,7 +1,7 @@
 from enum import Enum
 
-KEYWORDS = ['VAR', 'AND', 'OR', 'NOT', 'IF', 'THEN', 'ELIF', 'ELSE', 'FOR', 'TO', 'STEP', 'WHILE', 'STRING', 'FUNC']
-
+KEYWORDS = ['VAR', 'AND', 'OR', 'NOT', 'IF', 'THEN', 'ELIF', 'ELSE', 'FOR', 'TO', 'STEP', 'WHILE', 'STRING', 'FUNC', 'END' ]
+#NOTICE. maybe the "END" keyword isnt the best choice, since we used end instead of eof
 
 class ArithmeticOperator(Enum):
     PLUS = '+'
@@ -79,6 +79,7 @@ class InWords(Enum):
     FUNC = 'FUNC'
     STRING = 'STRING'
     LIST = 'LIST'
+    NEWLINE = 'NEWLINE'
 
 
 class Utils(Enum):
