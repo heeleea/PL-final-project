@@ -16,14 +16,20 @@ class Parser:
 
     def advance(self):
         self.token_index += 1
+        self.update_current_token()
+        return self.current_token
 
+    def reverse(self, amount=1):
+        self.token_index -= amount
+        self.update_current_token()
+        return self.current_token
+
+    def update_current_token(self):
         if self.token_index < len(self.tokens):
             self.current_token = self.tokens[self.token_index]
 
-        return self.current_token
-
     def create_ats(self):
-        result = self.expression()
+        result = self.statements()
 
         if not result.error and self.current_token.type != Utils.END.name:
             error_message = f"Expected {ArithmeticOperator.PLUS.value}, {ArithmeticOperator.MINUS.value}, {ArithmeticOperator.MULTIPLY.value} or {ArithmeticOperator.DIVIDE.value}"
@@ -181,11 +187,29 @@ class Parser:
         validator.register_advancement()
         self.advance()
 
+        if self.current_token.type == InWords.NEWLINE.name:
+            validator.register_advancement()
+            self.advance()
+
+            body = validator.register(self.expression())
+            if validator.error:
+                return validator
+
+            if not self.current_token.matches(InWords.KEYWORDS.name, Utils.END.name):
+                error = InvalidSyntaxError(f"Expected {Utils.END.name}", self.current_token.start_position, self.current_token.end_position)
+                return validator.failure(error)
+
+            validator.register_advancement()
+            self.advance()
+
+            for_node = ForNode(variable_name, start_value, end_value, step_value, body, True)
+            return validator.success(for_node)
+
         body = validator.register(self.expression())
         if validator.error:
             return validator
 
-        for_node = ForNode(variable_name, start_value, end_value, step_value, body)
+        for_node = ForNode(variable_name, start_value, end_value, step_value, body, False)
         return validator.success(for_node)
 
     def while_expression(self):
@@ -212,12 +236,30 @@ class Parser:
         validator.register_advancement()
         self.advance()
 
+        if self.current_token.type == InWords.NEWLINE.name:
+            validator.register_advancement()
+            self.advance()
+
+            body = validator.register(self.statements())
+            if validator.error:
+                return validator
+
+            if not self.current_token.matches(InWords.KEYWORDS.name, Utils.END.name):
+                error = InvalidSyntaxError(f"Expected {Utils.END.name}", self.current_token.start_position, self.current_token.end_position)
+                return validator.failure(error)
+
+            validator.register_advancement()
+            self.advance()
+
+            while_node = WhileNode(condition, body, True)
+            return validator.success(while_node)
+
         body = validator.register(self.expression())
 
         if validator.error:
             return validator
 
-        while_node = WhileNode(condition, body)
+        while_node = WhileNode(condition, body, False)
         return validator.success(while_node)
 
     def function_definition(self):
@@ -291,20 +333,36 @@ class Parser:
         validator.register_advancement()
         self.advance()
 
-        if self.current_token.type != Punctuation.FUNCTION_ASSIGNMENT.name:
-            error = InvalidSyntaxError(f"Expected {Punctuation.FUNCTION_ASSIGNMENT.value}",
-                                       self.current_token.start_position,
-                                       self.current_token.end_position)
+        if self.current_token.type == Punctuation.FUNCTION_ASSIGNMENT.name:
+            validator.register_advancement()
+            self.advance()
+
+            body = validator.register(self.expression())
+            if validator.error:
+                return validator
+
+            function_node = FunctionDefinitionNode(function_name, arguments, body, False)
+            return validator.success(function_node)
+
+        if self.current_token != InWords.NEWLINE.name:
+            error = InvalidSyntaxError(f"Expected {Punctuation.FUNCTION_ASSIGNMENT.value} or {InWords.NEWLINE.name}")
             validator.failure(error)
 
         validator.register_advancement()
         self.advance()
 
-        body = validator.register(self.expression())
+        body = validator.register(self.statements())
         if validator.error:
             return validator
 
-        function_node = FunctionDefinitionNode(function_name, arguments, body)
+        if self.current_token.matches(InWords.KEYWORDS.name, Utils.END.name):
+            error = InvalidSyntaxError(f"Expected {Utils.END.name}", self.current_token.start_position, self.current_token.end_position)
+            validator.failure(error)
+
+        validator.register_advancement()
+        self.advance()
+
+        function_node = FunctionDefinitionNode(function_name, arguments, body, True)
         return validator.success(function_node)
 
     def call(self):
@@ -402,6 +460,50 @@ class Parser:
 
         return result.success(left)
 
+    def statements(self):
+        validator = ParserValidator()
+        statements = []
+        start_position = self.current_token.start_position.get_copy()
+
+        while self.current_token.type == InWords.NEWLINE.name:
+            validator.register_advancement()
+            self.advance()
+
+        statement = validator.register(self.expression())
+
+        if validator.error:
+            return validator
+
+        statements.append(statement)
+
+        more_statements = True
+
+        while True:
+            newline_count = 0
+            while self.current_token.type == InWords.NEWLINE.name:
+                validator.register_advancement()
+                self.advance()
+                newline_count += 1
+            if newline_count == 0:
+                more_statements = False
+
+            if not more_statements:
+                break
+
+            statement = validator.try_register(self.expression())
+
+            if not statement:
+                self.reverse(validator.to_reverse_count)
+                more_statements = False
+                continue
+
+            statements.append(statement)
+
+        list_node = ListNode(statements)
+        list_node.set_position(start_position, self.current_token.end_position.get_copy())
+
+        return validator.success(list_node)
+
     def expression(self):
         result = ParserValidator()
 
@@ -443,7 +545,7 @@ class Parser:
     def comparison_expression(self):
         validator = ParserValidator()
 
-        if self.current_token.matches(InWords.KEYWORDS.name, 'NOT'):
+        if self.current_token.matches(InWords.KEYWORDS.name, InWords.NOT.name):
             token = self.current_token
             validator.register_advancement()
             self.advance()
@@ -521,69 +623,132 @@ class Parser:
         return validator.success(list_node)
 
     def if_expression(self):
-        result = ParserValidator()
+        validator = ParserValidator()
+        all_cases = validator.register(self.if_expression_cases(InWords.IF.name))
+        if validator.error:
+            return validator
+
+        cases, else_case = all_cases
+        if_node = IfNode(cases, else_case, True)
+
+        return validator.success(if_node)
+
+    def if_expression_cases(self, case_keyword):
+        validator = ParserValidator()
         cases = []
         else_case = None
 
-        if not self.current_token.matches(InWords.KEYWORDS.name, 'IF'):
-            error = InvalidSyntaxError("Expected 'IF'", self.current_token.start_position, self.current_token.end_position)
-            return result.failure(error)
+        if not self.current_token.matches(InWords.KEYWORDS.name, case_keyword):
+            error = InvalidSyntaxError(f"Expected '{case_keyword}'", self.current_token.start_position, self.current_token.end_position)
+            return validator.failure(error)
 
-        result.register_advancement()
+        validator.register_advancement()
         self.advance()
 
-        condition = result.register(self.expression())
+        condition = validator.register(self.expression())
 
-        if result.error:
-            return result
+        if validator.error:
+            return validator
 
-        if not self.current_token.matches(InWords.KEYWORDS.name, 'THEN'):
-            error = InvalidSyntaxError("Expected 'THEN'", self.current_token.start_position, self.current_token.end_position)
-            return result.failure(error)
+        if not self.current_token.matches(InWords.KEYWORDS.name, InWords.THEN.name):
+            error = InvalidSyntaxError(f"Expected '{InWords.THEN.name}'", self.current_token.start_position, self.current_token.end_position)
+            return validator.failure(error)
 
-        result.register_advancement()
+        validator.register_advancement()
         self.advance()
 
-        expression = result.register(self.expression())
-
-        if result.error:
-            return result
-
-        cases.append((condition, expression))
-
-        while self.current_token.matches(InWords.KEYWORDS.name, 'ELIF'):
-            result.register_advancement()
+        if self.current_token.type == InWords.NEWLINE.name:
+            validator.register_advancement()
             self.advance()
 
-            condition = result.register(self.expression())
+            statements = validator.register(self.statements())
+            if validator.error:
+                return validator
 
-            if result.error:
-                return result
+            cases.append((condition, statements, True))
 
-            if not self.current_token.matches(InWords.KEYWORDS.name, 'THEN'):
-                error = InvalidSyntaxError("Expected 'THEN'", self.current_token.start_position, self.current_token.end_position)
-                return result.failure(error)
+            if self.current_token.matches(InWords.KEYWORDS.name, Utils.END.name):
+                validator.register_advancement()
+                self.advance()
 
-            result.register_advancement()
+            else:
+                all_cases = validator.register(self.if_expression_b_or_c())
+                if validator.error:
+                    return validator
+
+                new_cases, else_case = all_cases
+                cases.extend(new_cases)
+
+        else:
+            expression = validator.register(self.expression())
+            if validator.error:
+                return validator
+
+            cases.append((condition, expression, False))
+
+            all_cases = validator.register(self.if_expression_b_or_c())
+            if validator.error:
+                return validator
+
+            new_cases, else_case = all_cases
+            cases.extend(new_cases)
+
+        return validator.success((cases, else_case))
+
+    def if_expression_b(self):
+        return self.if_expression_cases(InWords.ELIF.name)
+
+    def if_expression_c(self):
+        validator = ParserValidator()
+        else_case = None
+
+        if self.current_token.matches(InWords.KEYWORDS.name, InWords.ELSE.name):
+            validator.register_advancement()
             self.advance()
 
-            expression = result.register(self.expression())
+            if self.current_token == InWords.NEWLINE.name:
+                validator.register_advancement()
+                self.advance()
 
-            if result.error:
-                return result
+                statements = validator.register(self.statements())
+                if validator.error:
+                    return validator
 
-            cases.append((condition, expression))
+                else_case = (statements, True)
 
-        if self.current_token.matches(InWords.KEYWORDS.name, 'ELSE'):
-            result.register_advancement()
-            self.advance()
+                if self.current_token.matches(InWords.KEYWORDS.name, Utils.END.name):
+                    validator.register_advancement()
+                    self.advance()
 
-            else_case = result.register(self.expression())
+                else:
+                    error = InvalidSyntaxError(f"Expected {Utils.END.name}", self.current_token.start_position, self.current_token.end_position)
+                    return validator.failure(error)
 
-            if result.error:
-                return result
+            else:
+                expression = validator.register(self.expression())
+                if validator.error:
+                    return validator
 
-        return result.success(IfNode(cases, else_case))
+                else_case = (expression, False)
+
+        return validator.success(else_case)
+
+    def if_expression_b_or_c(self):
+        validator = ParserValidator()
+        cases, else_case = [], None
+
+        if self.current_token.matches(InWords.KEYWORDS.name, InWords.ELIF.name):
+            all_cases = validator.register(self.if_expression_b())
+            if validator.error:
+                return validator
+            cases, else_case = all_cases
+
+        else:
+            else_case = validator.register(self.if_expression_c())
+            if validator.error:
+                return validator
+
+        return validator.success((cases, else_case))
 
     def term(self):
         return self.binary_operation(self.factor, MULTIPLICATIVE_OPERATORS_NAMES)
@@ -594,6 +759,7 @@ class ParserValidator:
         self.error = None
         self.node = None
         self.advance_count = 0
+        self.to_reverse_count = 0
 
     def register(self, result):
         self.advance_count += result.advance_count
@@ -602,6 +768,13 @@ class ParserValidator:
             self.error = result.error
 
         return result.node
+
+    def try_register(self, validator):
+        if validator.error:
+            self.to_reverse_count = validator.advance_count
+            return None
+
+        return self.register(validator)
 
     def register_advancement(self):
         self.advance_count += 1

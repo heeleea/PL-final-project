@@ -279,66 +279,64 @@ class BaseFunction(Value):
         new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
         return new_context
 
-    def check_args(self, arguments, args):
-
+    def check_args(self, arg_names, args):
         validator = RuntimeValidator()
 
-        if len(args) > len(arguments):
-            error = CostumedRunTimeError(f"{len(args) - len(arguments)} too many args passed into '{self.name}'",
-                                         self.start_position,
-                                         self.start_position,
-                                         self.context)
+        if len(args) > len(arg_names):
+            error = CostumedRunTimeError(f"{len(args) - len(arg_names)} too many args passed into '{self.name}'", self.start_position, self.end_position, self.context)
             return validator.failure(error)
 
-        if len(args) < len(arguments):
-            error = CostumedRunTimeError(f"{len(arguments) - len(args)} too few args passed into '{self.name}'",
-                                         self.start_position,
-                                         self.end_position,
-                                         self.context)
+        if len(args) < len(arg_names):
+            error = CostumedRunTimeError(f"{len(arg_names) - len(args)} too few args passed into '{self.name}'", self.start_position, self.end_position, self.context)
             return validator.failure(error)
 
         return validator.success(None)
 
-    def populate_args(self, arguments, args, execution_context):
+    @staticmethod
+    def populate_args(arg_names, args, execution_context):
         for i in range(len(args)):
-            arg_name = arguments[i]
+            arg_name = arg_names[i]
             arg_value = args[i]
             arg_value.set_context(execution_context)
             execution_context.symbol_table.set(arg_name, arg_value)
 
-    def check_and_populate_args(self, arguments, args, execution_context):
+    def check_and_populate_args(self, arg_names, args, execution_context):
         validator = RuntimeValidator()
-        validator.register(self.check_args(arguments, args))
+        validator.register(self.check_args(arg_names, args))
 
         if validator.error:
             return validator
 
-        self.populate_args(arguments, args, execution_context)
+        self.populate_args(arg_names, args, execution_context)
 
         return validator.success(None)
 
 
 class Function(BaseFunction):
-    def __init__(self, name, arguments, body):
+    def __init__(self, name, arg_names, body, should_return_null):
         super().__init__(name)
-        self.arguments = arguments
+        self.arg_names = arg_names
         self.body = body
+        self.should_return_null = should_return_null
 
     def execute(self, args):
         validator = RuntimeValidator()
         semantical_analysis = SemanticalAnalysis()
         execution_context = self.generate_new_context()
 
-        validator.register(self.check_and_populate_args(self.arguments, args, execution_context))
+        validator.register(self.check_and_populate_args(self.arg_names, args, execution_context))
         if validator.error:
             return validator
 
         value = validator.register(semantical_analysis.transverse(self.body, execution_context))
-        if validator.error: return validator
-        return validator.success(value)
+        if validator.error:
+            return validator
+
+        result = Number.null if self.should_return_null else value
+        return validator.success(result)
 
     def get_copy(self):
-        copy = Function(self.name, self.body, self.arguments)
+        copy = Function(self.name, self.body, self.arg_names, self.should_return_null)
         copy.set_context(self.context)
         copy.set_position(self.start_position, self.end_position)
         return copy
@@ -347,18 +345,25 @@ class Function(BaseFunction):
         return f"<function {self.name}>"
 
 
+def define_args(*arg_names):
+    def decorator(func):
+        func.arg_names = arg_names
+        return func
+    return decorator
+
+
 class BuiltInFunctions(BaseFunction):
     def __init__(self, name):
         super().__init__(name)
 
-    def execute(self, arguments):
+    def execute(self, args):
         validator = RuntimeValidator()
         execution_context = self.generate_new_context()
 
         method_name = f'execute_{self.name}'
         method = getattr(self, method_name, self.method_not_found)
 
-        validator.register(self.check_and_populate_args(method.arg_names, arguments, execution_context))
+        validator.register(self.check_and_populate_args(method.arg_names, args, execution_context))
         if validator.error:
             return validator
 
@@ -377,30 +382,31 @@ class BuiltInFunctions(BaseFunction):
     def __repr__(self):
         return f"<built-in function {self.name}>"
 
-    @staticmethod
-    def execute_print(execution_context):
+    @define_args(['value'])
+    def execute_print(self, execution_context):
         validator = RuntimeValidator()
         value = execution_context.symbol_table.get('value')
         print(str(value))
         return validator.success(Number.null)
-    execute_print.arg_names = ['value']
+    # execute_print.arg_names = ['value']
 
-    @staticmethod
-    def execute_print_return(execution_context):
+    @define_args(['value'])
+    def execute_print_return(self, execution_context):
         validator = RuntimeValidator()
         value = execution_context.symbol_table.get('value')
         return validator.success(String(str(value)))
-    execute_print.arg_names = ['value']
+    # execute_print_return.arg_names = ['value']
 
     @staticmethod
+    @define_args([])
     def execute_input(execution_context):
         validator = RuntimeValidator()
         text = input()
         return validator.success(String(text))
-    execute_input.arg_names = []
+    # execute_input.arg_names = []
 
-    @staticmethod
-    def execute_input_int(execution_context):
+    @define_args([])
+    def execute_input_int(self, execution_context):
         validator = RuntimeValidator()
         no_number = True
         number = None
@@ -416,52 +422,53 @@ class BuiltInFunctions(BaseFunction):
                 print(f"'{text}' must be an integer. Try Again!")
 
         return validator.success(Number(number))
-    execute_input.arg_names = []
+    # execute_input_int.arg_names = []
 
-    @staticmethod
-    def execute_clear(execution_context):
+    @define_args([])
+    def execute_clear(self, execution_context):
         validator = RuntimeValidator()
         os_name = os.name
         os.system('cls') if os_name == 'nt' else os.system('clear')
         return validator.success(Number.null)
-    execute_clear.arg_names = []
+    # execute_clear.arg_names = []
 
-    @staticmethod
-    def execute_is_number(execution_context):
+    @define_args(['value'])
+    def execute_is_number(self, execution_context):
         validator = RuntimeValidator()
         value = execution_context.symbol_table.get('value')
         is_number = isinstance(value, Number)
         result = Number.true if is_number else Number.false
         validator.success(result)
-    execute_is_number.arg_names = ['value']
+    # execute_is_number.arg_names = ['value']
 
-    @staticmethod
-    def execute_is_string(execution_context):
+    @define_args(['value'])
+    def execute_is_string(self, execution_context):
         validator = RuntimeValidator()
         value = execution_context.symbol_table.get('value')
         is_string = isinstance(value, String)
         result = Number.true if is_string else Number.false
         validator.success(result)
-    execute_is_string.arg_names = ['value']
+    # execute_is_string.arg_names = ['value']
 
-    @staticmethod
-    def execute_is_list(execution_context):
+    @define_args(['value'])
+    def execute_is_list(self, execution_context):
         validator = RuntimeValidator()
         value = execution_context.symbol_table.get('value')
         is_list = isinstance(value, List)
         result = Number.true if is_list else Number.false
         validator.success(result)
-    execute_is_list.arg_names = ['value']
+    # execute_is_list.arg_names = ['value']
 
-    @staticmethod
-    def execute_is_function(execution_context):
+    @define_args(['value'])
+    def execute_is_function(self, execution_context):
         validator = RuntimeValidator()
         value = execution_context.symbol_table.get('value')
         is_function = isinstance(value, BaseFunction)
         result = Number.true if is_function else Number.false
         validator.success(result)
-    execute_is_function.arg_names = ['value']
+    # execute_is_function.arg_names = ['value']
 
+    @define_args(['list', 'value'])
     def execute_append(self, execution_context):
         validator = RuntimeValidator()
 
@@ -474,8 +481,9 @@ class BuiltInFunctions(BaseFunction):
 
         list_.elements.append(value)
         return validator.success(Number.null)
-    execute_append.arg_names = ['list', 'value']
+    # execute_append.arg_names = ['list', 'value']
 
+    @define_args(['list', 'index'])
     def execute_pop(self, execution_context):
         validator = RuntimeValidator()
 
@@ -497,8 +505,9 @@ class BuiltInFunctions(BaseFunction):
             return validator.failure(error)
 
         return validator.success(element)
-    execute_pop.arg_names = ['list', 'index']
+    # execute_pop.arg_names = ['list', 'index']
 
+    @define_args(['list_a', 'list_b'])
     def execute_extend(self, execution_context):
         validator = RuntimeValidator()
 
@@ -516,7 +525,7 @@ class BuiltInFunctions(BaseFunction):
         list_a.elements.extend(list_b.elements)
         return validator.success(Number.null)
 
-    execute_extend.arg_names = ['list_a', 'list_b']
+    # execute_extend.arg_names = ['list_a', 'list_b']
 
     def method_not_found(self, node, context):
         raise Exception(f"Method {self.name} is not defined")
@@ -647,7 +656,7 @@ class SemanticalAnalysis:
         if error:
             return validator.failure(error)
 
-        result = result.set_position(node.start_position, node.end_position)
+        result.set_position(node.start_position, node.end_position)
         return validator.success(result)
 
     def transverse_unary(self, node: UnaryOperationNode, context):
@@ -691,7 +700,7 @@ class SemanticalAnalysis:
     def transverse_if_node(self, node: IfNode, context):
         validator = RuntimeValidator()
 
-        for condition, expression in node.cases:
+        for condition, expression, should_return_null in node.cases:
             condition_value = validator.register(self.transverse(condition, context))
 
             if validator.error:
@@ -703,17 +712,20 @@ class SemanticalAnalysis:
                 if validator.error:
                     return validator
 
-                return validator.success(expression_value)
+                result = Number.null if should_return_null else expression_value
+                return validator.success(result)
 
         if node.else_case:
-            else_value = validator.register(self.transverse(node.else_case, context))
+            expression, should_return_null = node.else_case
+            else_value = validator.register(self.transverse(expression, context))
 
             if validator.error:
                 return validator
 
-            return validator.success(else_value)
+            result = Number.null if should_return_null else else_value
+            return validator.success(result)
 
-        return validator.success(None)
+        return validator.success(Number.null)
 
     def transverse_for_node(self, node: ForNode, context):
         validator = RuntimeValidator()
@@ -755,7 +767,8 @@ class SemanticalAnalysis:
         returned_list = List(elements)
         returned_list.set_context(context)
         returned_list.set_position(node.start_position, node.end_position)
-        return validator.success(returned_list)
+        result = Number.null if node.should_return_null else returned_list
+        return validator.success(result)
 
     def transverse_while_node(self, node: WhileNode, context):
         validator = RuntimeValidator()
@@ -803,7 +816,7 @@ class SemanticalAnalysis:
         body = node.body
         arguments = [argument_name.value for argument_name in node.arguments]
 
-        function = Function(function_name, body, arguments)
+        function = Function(function_name, body, arguments, node.should_return_null)
         function.set_context(context)
         function.set_position(node.start_position, node.end_position)
 

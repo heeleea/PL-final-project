@@ -1,7 +1,6 @@
 from enum import Enum
 
-KEYWORDS = ['VAR', 'AND', 'OR', 'NOT', 'IF', 'THEN', 'ELIF', 'ELSE', 'FOR', 'TO', 'STEP', 'WHILE', 'STRING', 'FUNC', 'END' ]
-#NOTICE. maybe the "END" keyword isnt the best choice, since we used end instead of eof
+KEYWORDS = ['VAR', 'AND', 'OR', 'NOT', 'IF', 'THEN', 'ELIF', 'ELSE', 'FOR', 'TO', 'STEP', 'WHILE', 'STRING', 'FUNC', 'BLOCK']
 
 class ArithmeticOperator(Enum):
     PLUS = '+'
@@ -50,6 +49,8 @@ class Punctuation(Enum):
     COMMA = ','
     FUNCTION_ASSIGNMENT = '~'
     STRING = '"'
+    SEMICOLON = ';'
+    BACKSLASHN = '\n'
 
 
     def __str__(self):

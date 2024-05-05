@@ -22,7 +22,12 @@ class LexicalAnalysis:
 
         while self.current_char is not None:
             if self.current_char.isspace():
-                self.proceed()
+                if self.current_char == Punctuation.BACKSLASHN.value:
+                    new_line = self.create_end_of_line_token()
+                    tokens.append(new_line)
+
+                else:
+                    self.proceed()
 
             elif self.current_char.isdigit():
                 number = self.detect_number_type()
@@ -45,6 +50,11 @@ class LexicalAnalysis:
                     return [], error
 
                 tokens.append(token)
+
+            elif self.current_char == Punctuation.SEMICOLON.value:
+                new_line = self.create_end_of_line_token()
+                tokens.append(new_line)
+
 
             else:
                 function, token_type, enum_class = self.token_handlers_factory()
@@ -214,11 +224,7 @@ class LexicalAnalysis:
 
             self.proceed()
 
-
-        error = ExpectedCharError("\" is missing at the end of the string",
-                                  start_position,
-                                  self.char_position)
-
+        error = ExpectedCharError("\" is missing at the end of the string", start_position, self.char_position)
         return None, error
 
     def detect_less_than(self):
@@ -249,5 +255,14 @@ class LexicalAnalysis:
                       end_position=self.char_position)
         return token
 
-    def detect_end_of_line(self):
+    def create_end_of_line_token(self):
         token_type = InWords.NEWLINE
+        start_position = self.char_position.get_copy()
+        self.proceed()
+
+        token = Token(token_type=token_type.name,
+                      start_position=start_position,
+                      end_position=self.char_position)
+        return token
+
+

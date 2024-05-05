@@ -1,3 +1,5 @@
+import math
+
 import pytest
 
 from semantical_analysis import Number, List
@@ -103,3 +105,38 @@ def test_loop_with_list():
     for i in range(8):
         assert isinstance(result.elements[i], Number)
         assert result.elements[i].value == pow(2, i+1)
+
+
+@pytest.mark.parametrize("expression,expected", [
+    ("NULL", 0),
+    ("FALSE", 0),
+    ("TRUE", 1),
+    ("MATH_PI", math.pi),
+    ("PRINT(\"Hello\")", "Hello"),
+    ("IS_NUM(4)", 1),
+    ("IS_NUM($)", 0),
+    ("IS_STR(\"aaaaa\")", 1),
+    ("IS_STR(1)", 0),
+
+])
+def test_built_in_functions(expression, expected):
+    result, error = run(expression, FILE_NAME)
+
+    assert result == expected
+
+
+@pytest.mark.parametrize("inputs,expected", [
+])
+def test_complex_built_in_functions(inputs, expected):
+    inputs = ("VAR list=[1,2,3]", "APPEND(list,4)", "POP(list,3)", "list", "EXTEND(list,[4,5,6])", "list")
+    results = (None, [1,2,3,4], 4, [1,2,3], None, [1,2,3,4,5,6])
+    result = None
+
+    for i in range(len(inputs)):
+        result, error = run(inputs[i], FILE_NAME)
+
+    assert result == expected
+
+
+
+
