@@ -197,10 +197,14 @@ class Number(Value):
         return str(self.value)
 
 
-Number.null = Number(0)
-Number.false = Number(0)
-Number.true = Number(1)
-Number.math_PI = Number(math.pi)
+class NumberRunner:
+    pass
+
+
+NumberRunner.null = Number(0)
+NumberRunner.false = Number(0)
+NumberRunner.true = Number(1)
+NumberRunner.math_PI = Number(math.pi)
 
 
 class List(Value):
@@ -332,7 +336,7 @@ class Function(BaseFunction):
         if validator.error:
             return validator
 
-        result = Number.null if self.should_return_null else value
+        result = NumberRunner.null if self.should_return_null else value
         return validator.success(result)
 
     def get_copy(self):
@@ -382,30 +386,27 @@ class BuiltInFunctions(BaseFunction):
     def __repr__(self):
         return f"<built-in function {self.name}>"
 
-    @define_args(['value'])
+    @define_args('value')
     def execute_print(self, execution_context):
         validator = RuntimeValidator()
         value = execution_context.symbol_table.get('value')
         print(str(value))
-        return validator.success(Number.null)
-    # execute_print.arg_names = ['value']
+        return validator.success(NumberRunner.null)
 
-    @define_args(['value'])
+    @define_args('value')
     def execute_print_return(self, execution_context):
         validator = RuntimeValidator()
         value = execution_context.symbol_table.get('value')
         return validator.success(String(str(value)))
-    # execute_print_return.arg_names = ['value']
 
     @staticmethod
-    @define_args([])
+    @define_args()
     def execute_input(execution_context):
         validator = RuntimeValidator()
         text = input()
         return validator.success(String(text))
-    # execute_input.arg_names = []
 
-    @define_args([])
+    @define_args()
     def execute_input_int(self, execution_context):
         validator = RuntimeValidator()
         no_number = True
@@ -422,53 +423,52 @@ class BuiltInFunctions(BaseFunction):
                 print(f"'{text}' must be an integer. Try Again!")
 
         return validator.success(Number(number))
-    # execute_input_int.arg_names = []
 
-    @define_args([])
+    @define_args()
     def execute_clear(self, execution_context):
         validator = RuntimeValidator()
         os_name = os.name
-        os.system('cls') if os_name == 'nt' else os.system('clear')
-        return validator.success(Number.null)
-    # execute_clear.arg_names = []
 
-    @define_args(['value'])
+        if os_name == "nt":
+            os.system('cls')  # Windows
+        else:
+            os.system('clear')  # For Unix-like
+
+        return validator.success(NumberRunner.null)
+
+    @define_args('value')
     def execute_is_number(self, execution_context):
         validator = RuntimeValidator()
         value = execution_context.symbol_table.get('value')
         is_number = isinstance(value, Number)
-        result = Number.true if is_number else Number.false
-        validator.success(result)
-    # execute_is_number.arg_names = ['value']
+        result = NumberRunner.true if is_number else NumberRunner.false
+        return validator.success(result)
 
-    @define_args(['value'])
+    @define_args('value')
     def execute_is_string(self, execution_context):
         validator = RuntimeValidator()
         value = execution_context.symbol_table.get('value')
         is_string = isinstance(value, String)
-        result = Number.true if is_string else Number.false
-        validator.success(result)
-    # execute_is_string.arg_names = ['value']
+        result = NumberRunner.true if is_string else NumberRunner.false
+        return validator.success(result)
 
-    @define_args(['value'])
+    @define_args('value')
     def execute_is_list(self, execution_context):
         validator = RuntimeValidator()
         value = execution_context.symbol_table.get('value')
         is_list = isinstance(value, List)
-        result = Number.true if is_list else Number.false
-        validator.success(result)
-    # execute_is_list.arg_names = ['value']
+        result = NumberRunner.true if is_list else NumberRunner.false
+        return validator.success(result)
 
-    @define_args(['value'])
+    @define_args('value')
     def execute_is_function(self, execution_context):
         validator = RuntimeValidator()
         value = execution_context.symbol_table.get('value')
         is_function = isinstance(value, BaseFunction)
-        result = Number.true if is_function else Number.false
-        validator.success(result)
-    # execute_is_function.arg_names = ['value']
+        result = NumberRunner.true if is_function else NumberRunner.false
+        return validator.success(result)
 
-    @define_args(['list', 'value'])
+    @define_args('list', 'value')
     def execute_append(self, execution_context):
         validator = RuntimeValidator()
 
@@ -480,10 +480,9 @@ class BuiltInFunctions(BaseFunction):
             return validator.failure(error)
 
         list_.elements.append(value)
-        return validator.success(Number.null)
-    # execute_append.arg_names = ['list', 'value']
+        return validator.success(NumberRunner.null)
 
-    @define_args(['list', 'index'])
+    @define_args('list', 'index')
     def execute_pop(self, execution_context):
         validator = RuntimeValidator()
 
@@ -505,9 +504,8 @@ class BuiltInFunctions(BaseFunction):
             return validator.failure(error)
 
         return validator.success(element)
-    # execute_pop.arg_names = ['list', 'index']
 
-    @define_args(['list_a', 'list_b'])
+    @define_args('list_a', 'list_b')
     def execute_extend(self, execution_context):
         validator = RuntimeValidator()
 
@@ -523,26 +521,28 @@ class BuiltInFunctions(BaseFunction):
             return validator.failure(error)
 
         list_a.elements.extend(list_b.elements)
-        return validator.success(Number.null)
-
-    # execute_extend.arg_names = ['list_a', 'list_b']
+        return validator.success(NumberRunner.null)
 
     def method_not_found(self, node, context):
         raise Exception(f"Method {self.name} is not defined")
 
 
-BuiltInFunctions.print = BuiltInFunctions("print")
-BuiltInFunctions.print_return = BuiltInFunctions("print_return")
-BuiltInFunctions.input = BuiltInFunctions("input")
-BuiltInFunctions.input_int = BuiltInFunctions("input_int")
-BuiltInFunctions.clear = BuiltInFunctions("clear")
-BuiltInFunctions.is_number = BuiltInFunctions("is_number")
-BuiltInFunctions.is_string = BuiltInFunctions("is_string")
-BuiltInFunctions.is_list = BuiltInFunctions("is_list")
-BuiltInFunctions.is_function = BuiltInFunctions("is_function")
-BuiltInFunctions.append = BuiltInFunctions("append")
-BuiltInFunctions.pop = BuiltInFunctions("pop")
-BuiltInFunctions.extend = BuiltInFunctions("extend")
+class BuiltInFunctionRunner:
+    pass
+
+
+BuiltInFunctionRunner.print = BuiltInFunctions("print")
+BuiltInFunctionRunner.print_return = BuiltInFunctions("print_return")
+BuiltInFunctionRunner.input = BuiltInFunctions("input")
+BuiltInFunctionRunner.input_int = BuiltInFunctions("input_int")
+BuiltInFunctionRunner.clear = BuiltInFunctions("clear")
+BuiltInFunctionRunner.is_number = BuiltInFunctions("is_number")
+BuiltInFunctionRunner.is_string = BuiltInFunctions("is_string")
+BuiltInFunctionRunner.is_list = BuiltInFunctions("is_list")
+BuiltInFunctionRunner.is_function = BuiltInFunctions("is_function")
+BuiltInFunctionRunner.append = BuiltInFunctions("append")
+BuiltInFunctionRunner.pop = BuiltInFunctions("pop")
+BuiltInFunctionRunner.extend = BuiltInFunctions("extend")
 
 
 class String(Value):
@@ -847,8 +847,8 @@ class SemanticalAnalysis:
         if validator.error:
             return validator
 
-        return_value = return_value.copy()
-        return_value.set_position(node.start_position,node.end_position)
+        return_value = return_value.get_copy()
+        return_value.set_position(node.start_position, node.end_position)
         return_value.set_context(context)
         return validator.success(return_value)
 

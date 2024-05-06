@@ -1,28 +1,28 @@
 from parser import Parser
 from context import Context
 from lexical_analysis import LexicalAnalysis
-from semantical_analysis import SemanticalAnalysis, Number, BuiltInFunctions
+from semantical_analysis import SemanticalAnalysis, NumberRunner, BuiltInFunctionRunner
 from symbol_table import SymbolTable
 
 
 global_symbol_table = SymbolTable()
-global_symbol_table.set("TRUE", Number.true)
-global_symbol_table.set("FALSE", Number.false)
-global_symbol_table.set("NULL", Number.null)
-global_symbol_table.set("MATH_PI", Number.math_PI) #not sure its relevant?
-global_symbol_table.set("PRINT", BuiltInFunctions.print)
-global_symbol_table.set("PRINT_RETURN", BuiltInFunctions.print_return)
-global_symbol_table.set("INPUT", BuiltInFunctions.input)
-global_symbol_table.set("INPUT_INT", BuiltInFunctions.input_int)
-global_symbol_table.set("CLEAR", BuiltInFunctions.clear)
-global_symbol_table.set("CLS", BuiltInFunctions.clear)
-global_symbol_table.set("IS_NUM", BuiltInFunctions.is_number)
-global_symbol_table.set("IS_STR", BuiltInFunctions.is_string)
-global_symbol_table.set("IS_LIST", BuiltInFunctions.is_list)
-global_symbol_table.set("IS_FUN", BuiltInFunctions.is_function)
-global_symbol_table.set("APPEND", BuiltInFunctions.append)
-global_symbol_table.set("POP", BuiltInFunctions.pop)
-global_symbol_table.set("EXTEND", BuiltInFunctions.extend)
+global_symbol_table.set("TRUE", NumberRunner.true)
+global_symbol_table.set("FALSE", NumberRunner.false)
+global_symbol_table.set("NULL", NumberRunner.null)
+global_symbol_table.set("MATH_PI", NumberRunner.math_PI)
+global_symbol_table.set("PRINT", BuiltInFunctionRunner.print)
+global_symbol_table.set("PRINT_RETURN", BuiltInFunctionRunner.print_return)
+global_symbol_table.set("INPUT", BuiltInFunctionRunner.input)
+global_symbol_table.set("INPUT_INT", BuiltInFunctionRunner.input_int)
+global_symbol_table.set("CLEAR", BuiltInFunctionRunner.clear)
+global_symbol_table.set("CLS", BuiltInFunctionRunner.clear)
+global_symbol_table.set("IS_NUM", BuiltInFunctionRunner.is_number)
+global_symbol_table.set("IS_STR", BuiltInFunctionRunner.is_string)
+global_symbol_table.set("IS_LIST", BuiltInFunctionRunner.is_list)
+global_symbol_table.set("IS_FUN", BuiltInFunctionRunner.is_function)
+global_symbol_table.set("APPEND", BuiltInFunctionRunner.append)
+global_symbol_table.set("POP", BuiltInFunctionRunner.pop)
+global_symbol_table.set("EXTEND", BuiltInFunctionRunner.extend)
 
 
 def run(input, file_name):
@@ -32,7 +32,7 @@ def run(input, file_name):
         return None, error
 
     parse = Parser(tokens)
-    ast = parse.create_ats()
+    ast = parse.create_ast()
     if ast.error:
         return None, ast.error
 

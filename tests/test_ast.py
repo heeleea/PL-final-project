@@ -15,7 +15,7 @@ def test_number_node_creation():
     tokens, error = lexer.create_token_stream()
 
     parse = Parser(tokens)
-    ast = parse.create_ats()
+    ast = parse.create_ast()
 
     assert isinstance(ast.node, NumberNode)
 
@@ -32,7 +32,7 @@ def test_binary_operation_node_creation(input, operation):
     tokens, error = lexer.create_token_stream()
 
     parse = Parser(tokens)
-    ast = parse.create_ats()
+    ast = parse.create_ast()
 
     assert isinstance(ast.node, BinaryOperationNode)
     assert isinstance(ast.node.right_node, NumberNode)
@@ -50,7 +50,7 @@ def test_unary_operation_node_creation(input, operation):
     tokens, error = lexer.create_token_stream()
 
     parse = Parser(tokens)
-    ast = parse.create_ats()
+    ast = parse.create_ast()
 
     assert isinstance(ast.node, VariableAssignNode)
     assert isinstance(ast.node.value, UnaryOperationNode)
@@ -73,7 +73,7 @@ def test_if_node_creation(input):
     tokens, error = lexer.create_token_stream()
 
     parse = Parser(tokens)
-    ast = parse.create_ats()
+    ast = parse.create_ast()
 
     assert isinstance(ast.node, IfNode)
 
@@ -88,7 +88,7 @@ def test_for_node_creation(input, loop_body, end_value, start_value, step):
     tokens, error = lexer.create_token_stream()
 
     parse = Parser(tokens)
-    ast = parse.create_ats()
+    ast = parse.create_ast()
 
     assert isinstance(ast.node, ForNode)
     assert isinstance(ast.node.loop_body, loop_body)
@@ -112,7 +112,7 @@ def test_while_node_creation():
     tokens, _ = lexer.create_token_stream()
 
     parse = Parser(tokens)
-    ast = parse.create_ats()
+    ast = parse.create_ast()
 
     semantical_analysis = SemanticalAnalysis()
     context = Context('<program>')
@@ -123,7 +123,7 @@ def test_while_node_creation():
     tokens, _ = lexer.create_token_stream()
 
     parse = Parser(tokens)
-    ast = parse.create_ats()
+    ast = parse.create_ast()
 
     assert isinstance(ast.node, WhileNode)
     assert ast.node.condition
@@ -135,7 +135,7 @@ def test_variable_assign_node():
     tokens, _ = lexer.create_token_stream()
 
     parse = Parser(tokens)
-    ast = parse.create_ats()
+    ast = parse.create_ast()
 
     assert isinstance(ast.node, VariableAssignNode)
     assert ast.node.token.type == InWords.IDENTIFIER.name
@@ -152,7 +152,7 @@ def test_variable_access_creation():
     tokens, _ = lexer.create_token_stream()
 
     parse = Parser(tokens)
-    ast = parse.create_ats()
+    ast = parse.create_ast()
 
     semantical_analysis = SemanticalAnalysis()
     context = Context('<program>')
@@ -163,7 +163,7 @@ def test_variable_access_creation():
     tokens, _ = lexer.create_token_stream()
 
     parse = Parser(tokens)
-    ast = parse.create_ats()
+    ast = parse.create_ast()
 
     assert isinstance(ast.node, VariableAccessNode)
     assert ast.node.token.type == InWords.IDENTIFIER.name
@@ -175,7 +175,7 @@ def test_function_definition_node():
     tokens, _ = lexer.create_token_stream()
 
     parse = Parser(tokens)
-    ast = parse.create_ats()
+    ast = parse.create_ast()
 
     assert isinstance(ast.node, FunctionDefinitionNode)
 
@@ -190,7 +190,7 @@ def test_call_node():
     tokens, _ = lexer.create_token_stream()
 
     parse = Parser(tokens)
-    ast = parse.create_ats()
+    ast = parse.create_ast()
 
     semantical_analysis = SemanticalAnalysis()
     context = Context('<program>')
@@ -201,7 +201,7 @@ def test_call_node():
     tokens, _ = lexer.create_token_stream()
 
     parse = Parser(tokens)
-    ast = parse.create_ats()
+    ast = parse.create_ast()
 
     assert isinstance(ast.node, CallableNode)
     assert isinstance(ast.node.callable_node, VariableAccessNode)
@@ -214,7 +214,7 @@ def test_string_node():
     tokens, _ = lexer.create_token_stream()
 
     parse = Parser(tokens)
-    ast = parse.create_ats()
+    ast = parse.create_ast()
 
     assert isinstance(ast.node, StringNode)
     assert ast.node.token.value == string
@@ -225,7 +225,7 @@ def test_list_node():
     tokens, _ = lexer.create_token_stream()
 
     parse = Parser(tokens)
-    ast = parse.create_ats()
+    ast = parse.create_ast()
 
     assert isinstance(ast.node, ListNode)
     assert isinstance(ast.node.element_node, list)
@@ -249,6 +249,6 @@ def test_parser_errors(input):
     tokens, error = lexer.create_token_stream()
 
     parser = Parser(tokens)
-    ast = parser.create_ats()
+    ast = parser.create_ast()
 
     assert ast.error is not None, "Expected an error but got none."

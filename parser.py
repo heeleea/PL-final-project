@@ -28,7 +28,7 @@ class Parser:
         if self.token_index < len(self.tokens):
             self.current_token = self.tokens[self.token_index]
 
-    def create_ats(self):
+    def create_ast(self):
         result = self.statements()
 
         if not result.error and self.current_token.type != Utils.END.name:
