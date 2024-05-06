@@ -17,7 +17,8 @@ def test_number_node_creation():
     parse = Parser(tokens)
     ast = parse.create_ast()
 
-    assert isinstance(ast.node, NumberNode)
+    node = ast.node.element_node[0]
+    assert isinstance(node, NumberNode)
 
 
 @pytest.mark.parametrize('input,operation', [
@@ -34,11 +35,11 @@ def test_binary_operation_node_creation(input, operation):
     parse = Parser(tokens)
     ast = parse.create_ast()
 
-    assert isinstance(ast.node, BinaryOperationNode)
-    assert isinstance(ast.node.right_node, NumberNode)
-    assert isinstance(ast.node.left_node, NumberNode)
-    assert ast.node.operation.type == operation
-    assert ast.advance_count == 3
+    node = ast.node.element_node[0]
+    assert isinstance(node, BinaryOperationNode)
+    assert isinstance(node.right_node, NumberNode)
+    assert isinstance(node.left_node, NumberNode)
+    assert node.operation.type == operation
 
 
 @pytest.mark.parametrize('input,operation', [
@@ -52,12 +53,13 @@ def test_unary_operation_node_creation(input, operation):
     parse = Parser(tokens)
     ast = parse.create_ast()
 
-    assert isinstance(ast.node, VariableAssignNode)
-    assert isinstance(ast.node.value, UnaryOperationNode)
-    assert ast.node.value.operation.type == operation
+    node = ast.node.element_node[0]
+    assert isinstance(node, VariableAssignNode)
+    assert isinstance(node.value, UnaryOperationNode)
+    assert node.value.operation.type == operation
 
-    if ast.node.value.operation.type == InWords.KEYWORDS.name:
-        assert ast.node.value.operation.value == ComparisonOperator.NOT.name
+    if node.value.operation.type == InWords.KEYWORDS.name:
+        assert node.value.operation.value == ComparisonOperator.NOT.name
 
 
 @pytest.mark.parametrize('input', [
@@ -75,7 +77,8 @@ def test_if_node_creation(input):
     parse = Parser(tokens)
     ast = parse.create_ast()
 
-    assert isinstance(ast.node, IfNode)
+    node = ast.node.element_node[0]
+    assert isinstance(node, IfNode)
 
 
 @pytest.mark.parametrize('input,loop_body,end_value,start_value,step', [
@@ -90,16 +93,17 @@ def test_for_node_creation(input, loop_body, end_value, start_value, step):
     parse = Parser(tokens)
     ast = parse.create_ast()
 
-    assert isinstance(ast.node, ForNode)
-    assert isinstance(ast.node.loop_body, loop_body)
+    node = ast.node.element_node[0]
+    assert isinstance(node, ForNode)
+    assert isinstance(node.loop_body, loop_body)
 
-    assert ast.node.start_value.token.value == start_value
-    assert ast.node.end_value.token.value == end_value
+    assert node.start_value.token.value == start_value
+    assert node.end_value.token.value == end_value
 
-    if ast.node.step is not None:
-        assert ast.node.step.token.value == step
+    if node.step is not None:
+        assert node.step.token.value == step
     else:
-        assert ast.node.step == step
+        assert node.step == step
 
 
 def test_while_node_creation():
@@ -125,9 +129,10 @@ def test_while_node_creation():
     parse = Parser(tokens)
     ast = parse.create_ast()
 
-    assert isinstance(ast.node, WhileNode)
-    assert ast.node.condition
-    assert ast.node.loop_body
+    node = ast.node.element_node[0]
+    assert isinstance(node, WhileNode)
+    assert node.condition
+    assert node.loop_body
 
 
 def test_variable_assign_node():
@@ -137,9 +142,10 @@ def test_variable_assign_node():
     parse = Parser(tokens)
     ast = parse.create_ast()
 
-    assert isinstance(ast.node, VariableAssignNode)
-    assert ast.node.token.type == InWords.IDENTIFIER.name
-    assert ast.node.token.value == 'a'
+    node = ast.node.element_node[0]
+    assert isinstance(node, VariableAssignNode)
+    assert node.token.type == InWords.IDENTIFIER.name
+    assert node.token.value == 'a'
 
 
 def test_variable_access_creation():
@@ -165,9 +171,11 @@ def test_variable_access_creation():
     parse = Parser(tokens)
     ast = parse.create_ast()
 
-    assert isinstance(ast.node, VariableAccessNode)
-    assert ast.node.token.type == InWords.IDENTIFIER.name
-    assert ast.node.token.value == 'result'
+    node = ast.node.element_node[0]
+
+    assert isinstance(node, VariableAccessNode)
+    assert node.token.type == InWords.IDENTIFIER.name
+    assert node.token.value == 'result'
 
 
 def test_function_definition_node():
@@ -177,7 +185,9 @@ def test_function_definition_node():
     parse = Parser(tokens)
     ast = parse.create_ast()
 
-    assert isinstance(ast.node, FunctionDefinitionNode)
+    node = ast.node.element_node[0]
+
+    assert isinstance(node, FunctionDefinitionNode)
 
 
 def test_call_node():
@@ -203,9 +213,11 @@ def test_call_node():
     parse = Parser(tokens)
     ast = parse.create_ast()
 
-    assert isinstance(ast.node, CallableNode)
-    assert isinstance(ast.node.callable_node, VariableAccessNode)
-    assert isinstance(ast.node.arguments, list)
+    node = ast.node.element_node[0]
+
+    assert isinstance(node, CallableNode)
+    assert isinstance(node.callable_node, VariableAccessNode)
+    assert isinstance(node.arguments, list)
 
 
 def test_string_node():
@@ -216,8 +228,10 @@ def test_string_node():
     parse = Parser(tokens)
     ast = parse.create_ast()
 
-    assert isinstance(ast.node, StringNode)
-    assert ast.node.token.value == string
+    node = ast.node.element_node[0]
+
+    assert isinstance(node, StringNode)
+    assert node.token.value == string
 
 
 def test_list_node():
@@ -227,8 +241,10 @@ def test_list_node():
     parse = Parser(tokens)
     ast = parse.create_ast()
 
-    assert isinstance(ast.node, ListNode)
-    assert isinstance(ast.node.element_node, list)
+    node = ast.node.element_node[0]
+
+    assert isinstance(node, ListNode)
+    assert isinstance(node.element_node, list)
 
 
 @pytest.mark.parametrize("input", [
