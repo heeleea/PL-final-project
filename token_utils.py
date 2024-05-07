@@ -1,7 +1,6 @@
 from enum import Enum
 
-KEYWORDS = ['VAR', 'AND', 'OR', 'NOT', 'IF', 'THEN', 'ELIF', 'ELSE', 'FOR', 'TO', 'STEP', 'WHILE']
-
+KEYWORDS = ['VAR', 'AND', 'OR', 'NOT', 'IF', 'THEN', 'ELIF', 'ELSE', 'FOR', 'TO', 'STEP', 'WHILE', 'STRING', 'FUNC', 'BLOCK']
 
 class ArithmeticOperator(Enum):
     PLUS = '+'
@@ -45,6 +44,14 @@ class Conditions(Enum):
 class Punctuation(Enum):
     LEFT_PARENTHESIS = '('
     RIGHT_PARENTHESIS = ')'
+    LEFT_SQUARE = '['
+    RIGHT_SQUARE = ']'
+    COMMA = ','
+    FUNCTION_ASSIGNMENT = '~'
+    STRING = '"'
+    SEMICOLON = ';'
+    BACKSLASHN = '\n'
+
 
     def __str__(self):
         return self.name
@@ -70,6 +77,10 @@ class InWords(Enum):
     TO = 'TO'
     STEP = 'STEP'
     WHILE = 'WHILE'
+    FUNC = 'FUNC'
+    STRING = 'STRING'
+    LIST = 'LIST'
+    NEWLINE = 'NEWLINE'
 
 
 class Utils(Enum):
@@ -82,8 +93,8 @@ class Token:
         self.value = value
 
         if start_position:
-            self.start_position = start_position.get_position()
-            self.end_position = start_position.get_position()
+            self.start_position = start_position.get_copy()
+            self.end_position = start_position.get_copy()
             self.end_position.advance()
 
         if end_position:

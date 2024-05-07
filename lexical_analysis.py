@@ -22,7 +22,12 @@ class LexicalAnalysis:
 
         while self.current_char is not None:
             if self.current_char.isspace():
-                self.proceed()
+                if self.current_char == Punctuation.BACKSLASHN.value:
+                    new_line = self.create_end_of_line_token()
+                    tokens.append(new_line)
+
+                else:
+                    self.proceed()
 
             elif self.current_char.isdigit():
                 number = self.detect_number_type()
@@ -39,6 +44,18 @@ class LexicalAnalysis:
 
                 tokens.append(token)
 
+            elif self.current_char == Punctuation.STRING.value:
+                token, error = self.detect_string()
+                if error:
+                    return [], error
+
+                tokens.append(token)
+
+            elif self.current_char == Punctuation.SEMICOLON.value:
+                new_line = self.create_end_of_line_token()
+                tokens.append(new_line)
+
+
             else:
                 function, token_type, enum_class = self.token_handlers_factory()
                 if function is not None:
@@ -51,7 +68,7 @@ class LexicalAnalysis:
                         tokens.append(token)
 
                 else:
-                    start_position = self.char_position.get_position()
+                    start_position = self.char_position.get_copy()
                     char = self.current_char
                     self.proceed()
 
@@ -80,7 +97,7 @@ class LexicalAnalysis:
         return self.simple_token_handler, enum_class, token_type
 
     def simple_token_handler(self, enum_class, token_type):
-        start_position = self.char_position.get_position()
+        start_position = self.char_position.get_copy()
         self.proceed()
         token = Token(token_type=enum_class[token_type.name].name,
                       start_position=start_position,
@@ -101,7 +118,7 @@ class LexicalAnalysis:
     def detect_number_type(self):
         number_string = ''
         dot_count = 0
-        start_position = self.char_position.get_position()
+        start_position = self.char_position.get_copy()
 
         while self.current_char is not None and (self.current_char.isdigit() or self.current_char == '.'):
             if self.current_char == '.':
@@ -131,7 +148,7 @@ class LexicalAnalysis:
 
     def detect_identifier(self):
         identifier_str = ''
-        start_position = self.char_position.get_position()
+        start_position = self.char_position.get_copy()
 
         while self.current_char is not None and (self.current_char.isalnum() or self.current_char == '_'):
             identifier_str += self.current_char
@@ -145,7 +162,7 @@ class LexicalAnalysis:
         return token
 
     def detect_not_equals(self):
-        start_position = self.char_position.get_position()
+        start_position = self.char_position.get_copy()
         self.proceed()
 
         if self.current_char == '=':
@@ -156,11 +173,11 @@ class LexicalAnalysis:
             return token, None
 
         self.proceed()
-        return None, ExpectedCharError(start_position, self.char_position, "'=' (after '!')")
+        return None, ExpectedCharError("'=' (after '!')", start_position, self.char_position)
 
     def detect_comparison(self):
         token_type = OperatorPrefix.EQUALS
-        start_position = self.char_position.get_position()
+        start_position = self.char_position.get_copy()
         self.proceed()
 
         if self.current_char == '=':
@@ -173,9 +190,46 @@ class LexicalAnalysis:
 
         return token
 
+    def detect_string(self):
+        string = ''
+        token_type = InWords.STRING
+        start_position = self.char_position.get_copy()
+        escape_character = False
+        self.proceed()
+
+        escape_characters = {
+            'n': '\n',
+            't': '\t'
+        }
+
+        while self.current_char is not None:
+
+            if escape_character:
+                string += escape_characters.get(self.current_char, self.current_char)
+                escape_character = False
+
+            elif self.current_char == '\\':
+                escape_character = True
+
+            elif self.current_char == Punctuation.STRING.value:
+                self.proceed()
+                token = Token(token_type=token_type.name,
+                              value=string,
+                              start_position=start_position,
+                              end_position=self.char_position)
+                return token, None
+
+            else:
+                string += self.current_char
+
+            self.proceed()
+
+        error = ExpectedCharError("\" is missing at the end of the string", start_position, self.char_position)
+        return None, error
+
     def detect_less_than(self):
         token_type = OperatorPrefix.LESS_THAN
-        start_position = self.char_position.get_position()
+        start_position = self.char_position.get_copy()
         self.proceed()
 
         if self.current_char == OperatorPrefix.EQUALS.value:
@@ -189,7 +243,7 @@ class LexicalAnalysis:
 
     def detect_greater_than(self):
         token_type = OperatorPrefix.GREATER_THAN
-        start_position = self.char_position.get_position()
+        start_position = self.char_position.get_copy()
         self.proceed()
 
         if self.current_char == OperatorPrefix.EQUALS.value:
@@ -200,3 +254,15 @@ class LexicalAnalysis:
                       start_position=start_position,
                       end_position=self.char_position)
         return token
+
+    def create_end_of_line_token(self):
+        token_type = InWords.NEWLINE
+        start_position = self.char_position.get_copy()
+        self.proceed()
+
+        token = Token(token_type=token_type.name,
+                      start_position=start_position,
+                      end_position=self.char_position)
+        return token
+
+

@@ -1,8 +1,8 @@
 import pytest
 
-from error import IllegalCharError
 from tests.test_utils import FILE_NAME
 from lexical_analysis import LexicalAnalysis
+from error import IllegalCharError, ExpectedCharError
 from token_utils import Digit, ArithmeticOperator, Utils, ComparisonOperator, InWords, Punctuation, Token
 
 
@@ -84,7 +84,8 @@ def test_logic_operators(input, expected):
     ('FOR', InWords.FOR.name),
     ('TO', InWords.TO.name),
     ('STEP', InWords.STEP.name),
-    ('WHILE', InWords.WHILE.name)
+    ('WHILE', InWords.WHILE.name),
+    ('FUNC', InWords.FUNC.name)
 ])
 def test_detect_inwords(input, expected):
     lexer = LexicalAnalysis(input, FILE_NAME)
@@ -97,9 +98,14 @@ def test_detect_inwords(input, expected):
 
 @pytest.mark.parametrize('input,expected', [
     ('(', Punctuation.LEFT_PARENTHESIS.name),
-    (')', Punctuation.RIGHT_PARENTHESIS.name)
+    (')', Punctuation.RIGHT_PARENTHESIS.name),
+    ('[', Punctuation.LEFT_SQUARE.name),
+    (']', Punctuation.RIGHT_SQUARE.name),
+    (',', Punctuation.COMMA.name),
+    ('~', Punctuation.FUNCTION_ASSIGNMENT.name),
+    ('""', Punctuation.STRING.name)
 ])
-def test_detect_punctuation(input,expected):
+def test_detect_punctuation(input, expected):
     lexer = LexicalAnalysis(input, FILE_NAME)
     tokens, error = lexer.create_token_stream()
 
@@ -117,6 +123,11 @@ def test_detect_punctuation(input,expected):
     ('10+1', 4, [(10, Digit.INT.name), (None, ArithmeticOperator.PLUS.name), (1, Digit.INT.name),  (None, Utils.END.name)]),
     ('VAR a = 5', 5,  [(InWords.VAR.name, InWords.KEYWORDS.name), ('a', InWords.IDENTIFIER.name), (None, ArithmeticOperator.EQUALS.name), (5, Digit.INT.name), (None, Utils.END.name)]),
     ('VAR b = 7', 4, [(InWords.VAR.name, InWords.KEYWORDS.name), ('b', InWords.IDENTIFIER.name), (None, ArithmeticOperator.EQUALS.name), (7, Digit.INT.name), (None, Utils.END.name)]),
+    ('FUNC add(a,b) ~ a + b', 12, [(InWords.FUNC.value, InWords.KEYWORDS.name), ('add', InWords.IDENTIFIER.name), (None, Punctuation.LEFT_PARENTHESIS.name),
+                                   ('a', InWords.IDENTIFIER.name), (None, Punctuation.COMMA.name), ('b', InWords.IDENTIFIER.name), (None, Punctuation.RIGHT_PARENTHESIS.name),
+                                   (None, Punctuation.FUNCTION_ASSIGNMENT.name), ('a', InWords.IDENTIFIER.name), (None, ArithmeticOperator.PLUS.name), ('b', InWords.IDENTIFIER.name), (None, Utils.END.name)]),
+    ('[]', 3, [(None, Punctuation.LEFT_SQUARE.name), (None, Punctuation.RIGHT_SQUARE.name), (None, Utils.END.name)]),
+    ('[1,2,3]', 8, [(None, Punctuation.LEFT_SQUARE.name), (1, Digit.INT.name), (None, Punctuation.COMMA.name), (2, Digit.INT.name), (None, Punctuation.COMMA.name), (3, Digit.INT.name), (None, Punctuation.RIGHT_SQUARE.name), (None, Utils.END.name)])
 ])
 def test_create_token_stream(text, length, expected):
     lexer = LexicalAnalysis(text, FILE_NAME)
@@ -128,10 +139,36 @@ def test_create_token_stream(text, length, expected):
         assert expected[i][0] == tokens[i].value
 
 
-@pytest.mark.parametrize('input', ['$', '@', '#', '%', '&', '~'])
+@pytest.mark.parametrize("input,expected_string,expected_type", [
+    ("a string to test with", "a string to test with", InWords.STRING.name),
+    ("a string\\nwith\\tescapes", "a string\nwith\tescapes", InWords.STRING.name)
+
+])
+def test_detect_string(input, expected_string, expected_type):
+    lexer = LexicalAnalysis(f'"{input}"', FILE_NAME)
+    tokens, error = lexer.create_token_stream()
+
+    assert tokens[0].type == expected_type
+    assert tokens[0].value == expected_string
+
+
+@pytest.mark.parametrize('input', ['$', '@', '#', '%', '&'])
 def test_detect_illegal_char(input):
     lexer = LexicalAnalysis(input, FILE_NAME)
     _, error = lexer.create_token_stream()
 
     assert isinstance(error, IllegalCharError)
     assert error.details == f"'{input}'"
+
+
+@pytest.mark.parametrize("input,expected", [
+    ('"some text', "\" is missing at the end of the string"),  # negative testing for detect string
+    ('!', "'=' (after '!')")  # negative testing for detect not equals
+])
+def test_expected_char_error(input, expected):
+    lexer = LexicalAnalysis(input, FILE_NAME)
+    tokens, error = lexer.create_token_stream()
+
+    assert isinstance(error, ExpectedCharError)
+    assert error.details == expected
+

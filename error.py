@@ -19,7 +19,7 @@ class Position:
 
         return self
 
-    def get_position(self):
+    def get_copy(self):
         return Position(self.index, self.line, self.column, self.file_name, self.file_text)
 
 
@@ -88,3 +88,12 @@ class CostumedRunTimeError(Error):
             context = context.parent
 
         return f"Traceback (most recent call last):\n{result}"
+
+
+def error_message_generator(signs):
+    """ Generated an error message stating that one provided signs was expected."""
+    if len(signs) == 1:
+        formatted_signs = f"'{signs[0]}'"
+    else:
+        formatted_signs = ', '.join(f"'{sign}'" for sign in signs[:-1]) + f" or '{signs[-1]}'"
+    return f"Expected {formatted_signs}."

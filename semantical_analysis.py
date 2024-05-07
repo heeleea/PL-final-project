@@ -1,16 +1,21 @@
+import math
+import os
+
 from typing import Union
-from token_utils import ArithmeticOperator, ComparisonOperator, InWords
-from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, BasicPosition, VariableAccessNode, VariableAssignNode, IfNode, ForNode, WhileNode
+
+from context import Context
+from symbol_table import SymbolTable
 from error import CostumedRunTimeError
+from token_utils import ArithmeticOperator, ComparisonOperator, InWords
+from ast_nodes import BinaryOperationNode, UnaryOperationNode, NumberNode, StringNode,  BasicPosition, VariableAccessNode, VariableAssignNode, IfNode, ForNode, WhileNode, FunctionDefinitionNode, CallableNode, ListNode
 
 
-class Number(BasicPosition):
-    def __init__(self, value):
+class Value(BasicPosition):
+    def __init__(self, ):
         super().__init__()
-        self.value = value
         self.context = None
+        self.set_position()
         self.set_context()
-        # self.set_position()
 
     def set_position(self, start_position=None, end_position=None):
         self.start_position = start_position
@@ -21,11 +26,77 @@ class Number(BasicPosition):
         self.context = context
         return self
 
+    def added_to(self, other):
+        return None, self.illegal_operation(other)
+
+    def subbed_by(self, other):
+        return None, self.illegal_operation(other)
+
+    def multiplied_by(self, other):
+        return None, self.illegal_operation(other)
+
+    def divided_by(self, other):
+        return None, self.illegal_operation(other)
+
+    def powered_by(self, other):
+        return None, self.illegal_operation(other)
+
+    def equals(self, other):
+        return None, self.illegal_operation(other)
+
+    def not_equals(self, other):
+        return None, self.illegal_operation(other)
+
+    def not_equals(self, other):
+        return None, self.illegal_operation(other)
+
+    def greater_than(self, other):
+        return None, self.illegal_operation(other)
+
+    def greater_than(self, other):
+        return None, self.illegal_operation(other)
+
+    def greater_than_equals(self, other):
+        return None, self.illegal_operation(other)
+
+    def logical_or(self, other):
+        return None, self.illegal_operation(other)
+
+    def logical_not(self):
+        return None, self.illegal_operation()
+
+    def execute(self, args):
+        validator = RuntimeValidator()
+        validator.failure(self.illegal_operation())
+        return validator
+
+    def get_copy(self):
+        raise Exception('No copy method defined')
+
+    def is_true(self):
+        return False
+
+    def illegal_operation(self, other=None):
+        if not other:
+            other = self
+
+        error = CostumedRunTimeError('Illegal operation', self.start_position, other.end_position, self.context)
+        return error
+
+
+class Number(Value):
+
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+
     def added_to(self, new_number):
         if isinstance(new_number, Number):
             number = Number(self.value + new_number.value)
             number.set_context(self.context)
             return number, None
+
+        return None, Value.illegal_operation(self.start_position, new_number.end_position)
 
     def subbed_by(self, new_number):
         if isinstance(new_number, Number):
@@ -33,25 +104,33 @@ class Number(BasicPosition):
             number.set_context(self.context)
             return number, None
 
+        return None, Value.illegal_operation(self.start_position, new_number.end_position)
+
     def multiplied_by(self, new_number):
         if isinstance(new_number, Number):
             number = Number(self.value * new_number.value)
             number.set_context(self.context)
             return number, None
 
+        return None, Value.illegal_operation(self.start_position, new_number.end_position)
+
     def divided_by(self, new_number):
         if isinstance(new_number, Number):
             if new_number.value == 0:
                 return None, CostumedRunTimeError('Division By Zero', new_number.start_position, new_number.end_position, self.context)
 
-        number = Number(self.value / new_number.value)
-        number.set_context(self.context)
-        return number, None
+            number = Number(self.value / new_number.value)
+            number.set_context(self.context)
+            return number, None
+
+        return None, Value.illegal_operation(self.start_position, new_number.end_position)
 
     def powered_by(self, power):
         if isinstance(power, Number):
             number = Number(self.value ** power.value).set_context(self.context)
             return number, None
+
+        return None, Value.illegal_operation(self.start_position, power.end_position)
 
     def get_comparison(self, new_number, operator):
         operations = {
@@ -72,6 +151,8 @@ class Number(BasicPosition):
                 number = Number(result)
                 number.set_context(self.context)
                 return number, None
+
+        return None, Value.illegal_operation(self.start_position, new_number.end_position)
 
     def equals(self, new_number):
         return self.get_comparison(new_number, ComparisonOperator.COMPARISON.value)
@@ -116,6 +197,394 @@ class Number(BasicPosition):
         return str(self.value)
 
 
+class NumberRunner:
+    pass
+
+
+NumberRunner.null = Number(0)
+NumberRunner.false = Number(0)
+NumberRunner.true = Number(1)
+NumberRunner.math_PI = Number(math.pi)
+
+
+class List(Value):
+    def __init__(self, elements):
+        super().__init__()
+        self.elements = elements
+
+    def added_to(self, new_element):
+        updated_list = self.get_copy()
+        updated_list.elements.append(new_element)
+
+        return updated_list, None
+
+    def subbed_by(self, index):
+        if isinstance(index, Number):
+            updated_list = self.get_copy()
+            try:
+                updated_list.elements.pop(index.value)
+                return updated_list, None
+            except:
+                error_message = 'Elements at this index could not be removed from the list because index is out of bounds'
+                error = RuntimeError(index.start_position,
+                                     index.end_position,
+                                     error_message,
+                                     self.context)
+                return None, error
+
+        else:
+            return None, Value.illegal_operation(self, index)
+
+    def multiplied_by(self, new_list):
+        if isinstance(new_list, List):
+            updated_list = self.get_copy()
+            updated_list.elements.extend(new_list.elements)
+            return updated_list, None
+
+        else:
+            return None, Value.illegal_operation(self, new_list)
+
+    def divided_by(self, index):
+        if isinstance(index, Number):
+            try:
+                return self.elements[index.value], None
+
+            except IndexError:
+                error_message = 'Elements at this index could not be retrieved from the list because index is out of bounds'
+                error = RuntimeError(index.start_position,
+                                     index.end_position,
+                                     error_message,
+                                     self.context)
+                return None, error
+
+        else:
+            return None, Value.illegal_operation(self, index)
+
+    def get_copy(self):
+        copied_list = List(self.elements)
+        copied_list.set_position((self.start_position, self.end_position))
+        copied_list.set_context(self.context)
+        return copied_list
+
+    def __str__(self):
+        return ', '.join(map(str, self.elements))
+
+    def __repr__(self):
+        return f"[{', '.join(map(str, self.elements))}]"
+
+
+class BaseFunction(Value):
+    def __init__(self, name):
+        super().__init__()
+        self.name = name or "<anonymous>"
+
+    def generate_new_context(self):
+        new_context = Context(self.name, self.context, self.start_position)
+        new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
+        return new_context
+
+    def check_args(self, arg_names, args):
+        validator = RuntimeValidator()
+
+        if len(args) > len(arg_names):
+            error = CostumedRunTimeError(f"{len(args) - len(arg_names)} too many args passed into '{self.name}'", self.start_position, self.end_position, self.context)
+            return validator.failure(error)
+
+        if len(args) < len(arg_names):
+            error = CostumedRunTimeError(f"{len(arg_names) - len(args)} too few args passed into '{self.name}'", self.start_position, self.end_position, self.context)
+            return validator.failure(error)
+
+        return validator.success(None)
+
+    @staticmethod
+    def populate_args(arg_names, args, execution_context):
+        for i in range(len(args)):
+            arg_name = arg_names[i]
+            arg_value = args[i]
+            arg_value.set_context(execution_context)
+            execution_context.symbol_table.set(arg_name, arg_value)
+
+    def check_and_populate_args(self, arg_names, args, execution_context):
+        validator = RuntimeValidator()
+        validator.register(self.check_args(arg_names, args))
+
+        if validator.error:
+            return validator
+
+        self.populate_args(arg_names, args, execution_context)
+
+        return validator.success(None)
+
+
+class Function(BaseFunction):
+    def __init__(self, name, arg_names, body, should_return_null):
+        super().__init__(name)
+        self.arg_names = arg_names
+        self.body = body
+        self.should_return_null = should_return_null
+
+    def execute(self, args):
+        validator = RuntimeValidator()
+        semantical_analysis = SemanticalAnalysis()
+        execution_context = self.generate_new_context()
+
+        validator.register(self.check_and_populate_args(self.arg_names, args, execution_context))
+        if validator.error:
+            return validator
+
+        value = validator.register(semantical_analysis.transverse(self.body, execution_context))
+        if validator.error:
+            return validator
+
+        result = NumberRunner.null if self.should_return_null else value
+        return validator.success(result)
+
+    def get_copy(self):
+        copy = Function(self.name, self.body, self.arg_names, self.should_return_null)
+        copy.set_context(self.context)
+        copy.set_position(self.start_position, self.end_position)
+        return copy
+
+    def __repr__(self):
+        return f"<function {self.name}>"
+
+
+def define_args(*arg_names):
+    def decorator(func):
+        func.arg_names = arg_names
+        return func
+    return decorator
+
+
+class BuiltInFunctions(BaseFunction):
+    def __init__(self, name):
+        super().__init__(name)
+
+    def execute(self, args):
+        validator = RuntimeValidator()
+        execution_context = self.generate_new_context()
+
+        method_name = f'execute_{self.name}'
+        method = getattr(self, method_name, self.method_not_found)
+
+        validator.register(self.check_and_populate_args(method.arg_names, args, execution_context))
+        if validator.error:
+            return validator
+
+        return_value = validator.register(method(execution_context))
+        if validator.error:
+            return validator
+
+        return validator.success(return_value)
+    
+    def get_copy(self):
+        copy = BuiltInFunctions(self.name)
+        copy.set_context(self.context)
+        copy.set_position(self.start_position, self.end_position)
+        return copy
+
+    def __repr__(self):
+        return f"<built-in function {self.name}>"
+
+    @define_args('value')
+    def execute_print(self, execution_context):
+        validator = RuntimeValidator()
+        value = execution_context.symbol_table.get('value')
+        print(str(value))
+        return validator.success(NumberRunner.null)
+
+    @define_args('value')
+    def execute_print_return(self, execution_context):
+        validator = RuntimeValidator()
+        value = execution_context.symbol_table.get('value')
+        return validator.success(String(str(value)))
+
+    @staticmethod
+    @define_args()
+    def execute_input(execution_context):
+        validator = RuntimeValidator()
+        text = input()
+        return validator.success(String(text))
+
+    @define_args()
+    def execute_input_int(self, execution_context):
+        validator = RuntimeValidator()
+        no_number = True
+        number = None
+
+        while no_number:
+            text = input()
+
+            try:
+                number = int(text)
+                no_number = False
+
+            except ValueError:
+                print(f"'{text}' must be an integer. Try Again!")
+
+        return validator.success(Number(number))
+
+    @define_args()
+    def execute_clear(self, execution_context):
+        validator = RuntimeValidator()
+        os_name = os.name
+
+        if os_name == "nt":
+            os.system('cls')  # Windows
+        else:
+            os.system('clear')  # For Unix-like
+
+        return validator.success(NumberRunner.null)
+
+    @define_args('value')
+    def execute_is_number(self, execution_context):
+        validator = RuntimeValidator()
+        value = execution_context.symbol_table.get('value')
+        is_number = isinstance(value, Number)
+        result = NumberRunner.true if is_number else NumberRunner.false
+        return validator.success(result)
+
+    @define_args('value')
+    def execute_is_string(self, execution_context):
+        validator = RuntimeValidator()
+        value = execution_context.symbol_table.get('value')
+        is_string = isinstance(value, String)
+        result = NumberRunner.true if is_string else NumberRunner.false
+        return validator.success(result)
+
+    @define_args('value')
+    def execute_is_list(self, execution_context):
+        validator = RuntimeValidator()
+        value = execution_context.symbol_table.get('value')
+        is_list = isinstance(value, List)
+        result = NumberRunner.true if is_list else NumberRunner.false
+        return validator.success(result)
+
+    @define_args('value')
+    def execute_is_function(self, execution_context):
+        validator = RuntimeValidator()
+        value = execution_context.symbol_table.get('value')
+        is_function = isinstance(value, BaseFunction)
+        result = NumberRunner.true if is_function else NumberRunner.false
+        return validator.success(result)
+
+    @define_args('list', 'value')
+    def execute_append(self, execution_context):
+        validator = RuntimeValidator()
+
+        list_ = execution_context.symbol_table.get('list')
+        value = execution_context.symbol_table.get('value')
+
+        if not isinstance(list_, List):
+            error = CostumedRunTimeError("First argument must be a list", self.start_position, self.end_position, execution_context)
+            return validator.failure(error)
+
+        list_.elements.append(value)
+        return validator.success(NumberRunner.null)
+
+    @define_args('list', 'index')
+    def execute_pop(self, execution_context):
+        validator = RuntimeValidator()
+
+        list_ = execution_context.symbol_table.get('list')
+        index = execution_context.symbol_table.get('index')
+
+        if not isinstance(list_, List):
+            error = CostumedRunTimeError("First argument must be a list", self.start_position, self.end_position, execution_context)
+            return validator.failure(error)
+
+        if not isinstance(index, Number):
+            error = CostumedRunTimeError("Second argument must be a number", self.start_position, self.end_position, execution_context)
+            return validator.failure(error)
+
+        try:
+            element = list_.elements.pop(index.value)
+        except IndexError:
+            error = CostumedRunTimeError("Index is out of bound", self.start_position, self.end_position, execution_context)
+            return validator.failure(error)
+
+        return validator.success(element)
+
+    @define_args('list_a', 'list_b')
+    def execute_extend(self, execution_context):
+        validator = RuntimeValidator()
+
+        list_a = execution_context.symbol_table.get('list_a')
+        list_b = execution_context.symbol_table.get('list_b')
+
+        if not isinstance(list_a, List):
+            error = CostumedRunTimeError("First argument must be a list", self.start_position, self.end_position, execution_context)
+            return validator.failure(error)
+
+        if not isinstance(list_b, List):
+            error = CostumedRunTimeError("Second argument must be a list", self.start_position, self.end_position, execution_context)
+            return validator.failure(error)
+
+        list_a.elements.extend(list_b.elements)
+        return validator.success(NumberRunner.null)
+
+    def method_not_found(self, node, context):
+        raise Exception(f"Method {self.name} is not defined")
+
+
+class BuiltInFunctionRunner:
+    pass
+
+
+BuiltInFunctionRunner.print = BuiltInFunctions("print")
+BuiltInFunctionRunner.print_return = BuiltInFunctions("print_return")
+BuiltInFunctionRunner.input = BuiltInFunctions("input")
+BuiltInFunctionRunner.input_int = BuiltInFunctions("input_int")
+BuiltInFunctionRunner.clear = BuiltInFunctions("clear")
+BuiltInFunctionRunner.is_number = BuiltInFunctions("is_number")
+BuiltInFunctionRunner.is_string = BuiltInFunctions("is_string")
+BuiltInFunctionRunner.is_list = BuiltInFunctions("is_list")
+BuiltInFunctionRunner.is_function = BuiltInFunctions("is_function")
+BuiltInFunctionRunner.append = BuiltInFunctions("append")
+BuiltInFunctionRunner.pop = BuiltInFunctions("pop")
+BuiltInFunctionRunner.extend = BuiltInFunctions("extend")
+
+
+class String(Value):
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+
+    def added_to(self, additional_string):
+
+        if isinstance(additional_string, String):
+            return String(self.value + additional_string.value).set_context(self.context), None
+
+        else:
+            return None, Value.illegal_operation(self, additional_string)
+
+    def multiplied_by(self, number):
+
+        if isinstance(number, Number):
+            new_string_value = self.value * number.value
+            new_string = String(new_string_value)
+            new_string.set_context().set_context(self.context)
+            return new_string, None
+
+        else:
+            return None, Value.illegal_operation(self, number)
+
+    def is_true(self):
+        return len(self.value) > 0
+
+    def get_copy(self):
+        copy = String(self.value)
+        copy.set_context(self.context)
+        copy.set_position(self.start_position, self.end_position)
+        return copy
+
+    def __str__(self):
+        return self.value
+
+    def __repr__(self):
+        return f'"{self.value}"'
+
+
 class RuntimeValidator:
     def __init__(self):
         self.value = None
@@ -154,6 +623,7 @@ class SemanticalAnalysis:
 
         value = value.get_copy()
         value.set_position(node.start_position, node.end_position)
+        value.set_context(context)
         return validator.success(value)
 
     def transverse_variable_assign_node(self, node, context):
@@ -186,7 +656,7 @@ class SemanticalAnalysis:
         if error:
             return validator.failure(error)
 
-        result = result.set_position(node.start_position, node.end_position)
+        result.set_position(node.start_position, node.end_position)
         return validator.success(result)
 
     def transverse_unary(self, node: UnaryOperationNode, context):
@@ -217,6 +687,12 @@ class SemanticalAnalysis:
         number.set_position(node.start_position, node.end_position)
         return RuntimeValidator().success(number)
 
+    @staticmethod
+    def transverse_string(node: StringNode, context):
+        validator = RuntimeValidator()
+        string = String(node.token.value).set_context(context)
+        return validator.success(string)
+
     def transverse_error(self, node, context):
         # TODO: raising an exception
         pass
@@ -224,7 +700,7 @@ class SemanticalAnalysis:
     def transverse_if_node(self, node: IfNode, context):
         validator = RuntimeValidator()
 
-        for condition, expression in node.cases:
+        for condition, expression, should_return_null in node.cases:
             condition_value = validator.register(self.transverse(condition, context))
 
             if validator.error:
@@ -236,20 +712,24 @@ class SemanticalAnalysis:
                 if validator.error:
                     return validator
 
-                return validator.success(expression_value)
+                result = Number.null if should_return_null else expression_value
+                return validator.success(result)
 
         if node.else_case:
-            else_value = validator.register(self.transverse(node.else_case, context))
+            expression, should_return_null = node.else_case
+            else_value = validator.register(self.transverse(expression, context))
 
             if validator.error:
                 return validator
 
-            return validator.success(else_value)
+            result = Number.null if should_return_null else else_value
+            return validator.success(result)
 
-        return validator.success(None)
+        return validator.success(Number.null)
 
     def transverse_for_node(self, node: ForNode, context):
         validator = RuntimeValidator()
+        elements = []
 
         start_value = validator.register(self.transverse(node.start_value, context))
         if validator.error:
@@ -275,18 +755,24 @@ class SemanticalAnalysis:
             condition = lambda: iteration > end_value.value
 
         while condition():
-            context.symbol_table.set(node.token.value, Number(iteration)) #node.variable_name
+            context.symbol_table.set(node.token.value, Number(iteration))
             iteration += step_value.value
 
-            validator.register(self.transverse(node.loop_body, context))
+            element = validator.register(self.transverse(node.loop_body, context))
+            elements.append(element)
 
             if validator.error:
                 return validator
 
-        return validator.success(None)
+        returned_list = List(elements)
+        returned_list.set_context(context)
+        returned_list.set_position(node.start_position, node.end_position)
+        result = Number.null if node.should_return_null else returned_list
+        return validator.success(result)
 
     def transverse_while_node(self, node: WhileNode, context):
         validator = RuntimeValidator()
+        elements = []
 
         while True:
             condition = validator.register(self.transverse(node.condition, context))
@@ -296,30 +782,111 @@ class SemanticalAnalysis:
             if not condition.is_true():
                 break
 
-            validator.register(self.transverse(node.loop_body, context))
+            element = validator.register(self.transverse(node.loop_body, context))
+            elements.append(element)
+
             if validator.error:
                 return validator
 
-        return validator.success(None)
+        returned_list = List(elements)
+        returned_list.set_context(context)
+        returned_list.set_position(node.start_position, node.end_position)
+        return validator.success(returned_list)
+
+    def transverse_list_node(self, node: ListNode, context):
+        validator = RuntimeValidator()
+        elements = []
+
+        for element_node in node.element_node:
+            element = validator.register(self.transverse(element_node, context))
+            elements.append(element)
+            if validator.error:
+                return validator
+
+        returned_list = List(elements)
+        returned_list.set_context(context)
+        returned_list.set_position(node.start_position, node.end_position)
+        return validator.success(returned_list)
 
     @staticmethod
-    def operator_handler_factory(token_type, node):
-        operators = {
-            ArithmeticOperator.PLUS.name: node.added_to,
-            ArithmeticOperator.MINUS.name: node.subbed_by,
-            ArithmeticOperator.MULTIPLY.name: node.multiplied_by,
-            ArithmeticOperator.DIVIDE.name: node.divided_by,
-            ArithmeticOperator.POWER.name: node.powered_by,
-            ComparisonOperator.COMPARISON.name: node.equals,
-            ComparisonOperator.NOT_EQUALS.name: node.not_equals,
-            ComparisonOperator.LESS_THAN.name: node.less_than,
-            ComparisonOperator.GREATER_THAN.name: node.greater_than,
-            ComparisonOperator.LESS_THAN_EQUALS.name: node.less_than_equals,
-            ComparisonOperator.GREATER_THAN_EQUALS.name: node.greater_than_equals,
-            ComparisonOperator.AND.name: node.logical_and,
-            ComparisonOperator.OR.name: node.logical_or
-        }
+    def transverse_function_definition_node(node: FunctionDefinitionNode, context):
+        validator = RuntimeValidator()
 
+        function_name = node.token.value if node.token else None
+        body = node.body
+        arguments = [argument_name.value for argument_name in node.arguments]
+
+        function = Function(function_name, body, arguments, node.should_return_null)
+        function.set_context(context)
+        function.set_position(node.start_position, node.end_position)
+
+        if node.token:
+            context.symbol_table.set(function_name, function)
+
+        return validator.success(function)
+
+    def transverse_callable_node(self, node: CallableNode, context):
+        validator = RuntimeValidator()
+        arguments = []
+
+        callable_node = self.transverse(node.callable_node, context)
+        value = validator.register(callable_node)
+
+        if validator.error:
+            return validator
+
+        value = value.get_copy()
+        value.set_position(node.start_position, node.end_position)
+
+        for argument in node.arguments:
+            current_argument = validator.register(self.transverse(argument, context))
+            arguments.append(current_argument)
+
+        result = value.execute(arguments)
+        return_value = validator.register(result)
+        if validator.error:
+            return validator
+
+        return_value = return_value.get_copy()
+        return_value.set_position(node.start_position, node.end_position)
+        return_value.set_context(context)
+        return validator.success(return_value)
+
+    @staticmethod
+    def get_operators_by_node(node):
+        if isinstance(node, String):
+            return {
+                ArithmeticOperator.PLUS.name: node.added_to,
+                ArithmeticOperator.MULTIPLY.name: node.multiplied_by
+            }
+
+        elif isinstance(node, List):
+            return {
+                ArithmeticOperator.PLUS.name: node.added_to,
+                ArithmeticOperator.MINUS.name: node.subbed_by,
+                ArithmeticOperator.MULTIPLY.name: node.multiplied_by,
+                ArithmeticOperator.DIVIDE.name: node.divided_by
+            }
+
+        elif isinstance(node, Value):
+            return {
+                ArithmeticOperator.PLUS.name: node.added_to,
+                ArithmeticOperator.MINUS.name: node.subbed_by,
+                ArithmeticOperator.MULTIPLY.name: node.multiplied_by,
+                ArithmeticOperator.DIVIDE.name: node.divided_by,
+                ArithmeticOperator.POWER.name: node.powered_by,
+                ComparisonOperator.COMPARISON.name: node.equals,
+                ComparisonOperator.NOT_EQUALS.name: node.not_equals,
+                ComparisonOperator.LESS_THAN.name: node.less_than,
+                ComparisonOperator.GREATER_THAN.name: node.greater_than,
+                ComparisonOperator.LESS_THAN_EQUALS.name: node.less_than_equals,
+                ComparisonOperator.GREATER_THAN_EQUALS.name: node.greater_than_equals,
+                ComparisonOperator.AND.name: node.logical_and,
+                ComparisonOperator.OR.name: node.logical_or
+            }
+
+    def operator_handler_factory(self, token_type, node):
+        operators = self.get_operators_by_node(node)
         return operators.get(token_type)
 
     def node_handler_factory(self, node):
@@ -331,7 +898,11 @@ class SemanticalAnalysis:
             'VariableAssignNode': self.transverse_variable_assign_node,
             'IfNode': self.transverse_if_node,
             'ForNode': self.transverse_for_node,
-            'WhileNode': self.transverse_while_node
+            'WhileNode': self.transverse_while_node,
+            'StringNode': self.transverse_string,
+            'FunctionDefinitionNode': self.transverse_function_definition_node,
+            'CallableNode': self.transverse_callable_node,
+            'ListNode': self.transverse_list_node
         }
 
         node_name = type(node).__name__
