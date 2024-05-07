@@ -13,10 +13,10 @@
 <list-expr> ::= <LEFT_SQUARE> (<expr> (<COMMA> <expr>)*)? <RIGHT_SQUARE>
 <if-expr> ::= IF <expr> THEN (<expr> <if-expr-b> | <if-expr-c>?) | (<newline> <statements> END | <if-expr-b> | <if-expr-c>)
 <if-expr-b> ::= ELIF <expr> THEN (<expr> <if-expr-b> | <if-expr-c>?) | (<newline> <statements> END | <if-expr-b> | <if-expr-c>)
-<if-expr-c> ::= "ELSE" <expr> | (<newline> <statements> END)
-<for-expr> ::= "FOR" <identifier> <EQUALS> <expr> TO <expr> ("STEP" <expr>)? THEN <expr> | (<newline> <statements> END)
-<while-expr> ::= "WHILE" <expr> THEN <expr> | (<newline> <statements> END)
-<func-def> ::= "FUN" <identifier>? <LEFT_PARENTHESIS> (<identifier> (<COMMA> <identifier>)*)? <RIGHT_PARENTHESIS> (<FUNCTION_ASSIGNMENT> <expr>) | (<newline> <statements> END)
+<if-expr-c> ::= ELSE <expr> | (<newline> <statements> END)
+<for-expr> ::= FOR <identifier> <EQUALS> <expr> TO <expr> (STEP <expr>)? THEN <expr> | (<newline> <statements> END)
+<while-expr> ::= WHILE <expr> THEN <expr> | (<newline> <statements> END)
+<func-def> ::= FUNC <identifier>? <LEFT_PARENTHESIS> (<identifier> (<COMMA> <identifier>)*)? <RIGHT_PARENTHESIS> (<FUNCTION_ASSIGNMENT> <expr>) | (<newline> <statements> END)
 
 # Language definitions and syntax and Basic elements
 <list> ::= <LEFT_SQUARE>(<string>|<int>|<float>|<identifier>)*<RIGHT_SQUARE>
