@@ -212,7 +212,7 @@ class Parser:
             if validator.error:
                 return validator
 
-            if not self.current_token.matches(InWords.KEYWORDS.name, Utils.END.name):
+            if not self.current_token.matches(InWords.KEYWORDS.name, Punctuation.BLOCK.name):
                 error_message = error_message_generator(EXPECTED_END)
                 error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
                 return validator.failure(error)
@@ -570,7 +570,7 @@ class Parser:
 
         if validator.error:
             error_message = error_message_generator(COMPARISON_EXPRESSIONS_MAIN)
-            error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)  # end = self.current_token.end_position
+            error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
             return validator.failure(error)
 
         return validator.success(node)
@@ -595,8 +595,8 @@ class Parser:
             validator.register_advancement()
             self.advance()
         else:
-            expression = validator.register(self.expression())
-            elements.append(expression)
+            element = validator.register(self.expression())
+            elements.append(element)
 
             if validator.error:
                 error_message = error_message_generator(LIST_EXPRESSION)
@@ -671,7 +671,7 @@ class Parser:
 
             cases.append((condition, statements, True))
 
-            if self.current_token.matches(InWords.KEYWORDS.name, Utils.END.name):
+            if self.current_token.matches(InWords.KEYWORDS.name, Punctuation.BLOCK.name):
                 validator.register_advancement()
                 self.advance()
 
