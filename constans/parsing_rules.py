@@ -1,4 +1,4 @@
-from token_utils import Digit, ArithmeticOperator, Punctuation, InWords, ComparisonOperator
+from constans.token_names import Digit, ArithmeticOperator, Punctuation, InWords, ComparisonOperator
 
 # rule sets that uses the enum values
 NUMBER_TYPES = {Digit.INT.value, Digit.FLOAT.value}

@@ -1,7 +1,21 @@
 from error import InvalidSyntaxError
-from token_utils import Digit, ArithmeticOperator, Punctuation, Utils, InWords, ComparisonOperator
-from ast_nodes import NumberNode, StringNode, ListNode, BinaryOperationNode, UnaryOperationNode, VariableAccessNode, \
-    VariableAssignNode, IfNode, ForNode, WhileNode, FunctionDefinitionNode, CallableNode
+from constans.token_names import Digit, ArithmeticOperator, Punctuation, Utils, InWords, ComparisonOperator
+
+from validators.parser_validator import ParserValidator
+
+from nodes.number_node import NumberNode
+from nodes.string_node import StringNode
+from nodes.list_node import ListNode
+from nodes.binary_operation_node import BinaryOperationNode
+from nodes.unary_operation_node import UnaryOperationNode
+from nodes.variable_access_node import VariableAccessNode
+from nodes.variable_assign_node import VariableAssignNode
+from nodes.if_node import IfNode
+from nodes.for_node import ForNode
+from nodes.while_node import WhileNode
+from nodes.function_definition_node import FunctionDefinitionNode
+from nodes.call_node import CallableNode
+
 from constans.parsing_rules import NUMBER_TYPES, STRING_TYPES, EXPRESSION_STARTERS, EXPRESSION_CLOSERS, LIST_CLOSERS, \
     LIST_STARTERS_NAMES, LIST_CLOSERS_NAMES, EXPRESSION_NAMES, EXPRESSION_STARTERS_NAMES, EXPRESSION_CLOSERS_NAMES, \
     IDENTIFIERS_NAMES, COMPARISON_EXPRESSION_NAMES, ADDITIVE_OPERATORS_NAMES, MULTIPLICATIVE_OPERATORS_NAMES, \
@@ -754,37 +768,3 @@ class Parser:
         return self.binary_operation(self.factor, MULTIPLICATIVE_OPERATORS_NAMES)
 
 
-class ParserValidator:
-    def __init__(self):
-        self.error = None
-        self.node = None
-        self.advance_count = 0
-        self.to_reverse_count = 0
-
-    def register(self, result):
-        self.advance_count += result.advance_count
-
-        if result.error:
-            self.error = result.error
-
-        return result.node
-
-    def try_register(self, validator):
-        if validator.error:
-            self.to_reverse_count = validator.advance_count
-            return None
-
-        return self.register(validator)
-
-    def register_advancement(self):
-        self.advance_count += 1
-
-    def success(self, node):
-        self.node = node
-        return self
-
-    def failure(self, error):
-        if not self.error or self.advance_count == 0:
-            self.error = error
-
-        return self

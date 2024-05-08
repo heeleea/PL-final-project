@@ -3,14 +3,14 @@ import math
 import pytest
 from unittest.mock import patch
 
-from semantical_analysis import Number, List
-from symbol_table import SymbolTable
+from entities.number import Number
+from entities.list import List
+from entities.symbol_table import SymbolTable
 from test_utils import FILE_NAME
 from run import run
-
-from context import Context
-
-from semantical_analysis import String, BuiltInFunctions
+from entities.context import Context
+from entities.string import String
+from entities.built_in_functions import BuiltInFunctions
 
 
 @pytest.fixture
@@ -177,7 +177,7 @@ def test_input_built_in_function(execution_context):
     test_input = "Hello, World!"
     expected_output = String(test_input)
 
-    with patch('builtins.input', return_value=test_input):
+    with patch('built_ins.input', return_value=test_input):
         input_function = BuiltInFunctions('input')
         result = input_function.execute_input(execution_context)
 
@@ -189,7 +189,7 @@ def test_input_int_built_in_function(execution_context):
     test_input = "6"
     expected_output = Number(6)
 
-    with patch('builtins.input', return_value=test_input):
+    with patch('built_ins.input', return_value=test_input):
         input_function = BuiltInFunctions("input_int")
         result = input_function.execute_input_int(execution_context)
 

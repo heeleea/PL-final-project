@@ -1,5 +1,7 @@
-from error import Position, IllegalCharError, ExpectedCharError
-from token_utils import Token, Digit, Punctuation, ArithmeticOperator, Utils, InWords, KEYWORDS, ComparisonOperator, OperatorPrefix
+from entities.token import Token
+from entities.position import Position
+from error import IllegalCharError, ExpectedCharError
+from constans.token_names import Digit, Punctuation, ArithmeticOperator, Utils, InWords, KEYWORDS, ComparisonOperator, OperatorPrefix
 
 
 OPERATOR_PREFIXES = [operator.value for operator in OperatorPrefix.__members__.values()]

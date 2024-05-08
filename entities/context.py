@@ -1,4 +1,4 @@
-from symbol_table import SymbolTable
+
 
 class Context:
     def __init__(self, display_name, parent=None, parent_entry_position=None):
