@@ -1,0 +1,68 @@
+#Structured statements , expression and control constructs
+<program> ::= <statements>
+<statements> ::= <statement> (<newline>+ <statement>)* <newline>*
+<statement> ::= <expr> | <if-expr> | <for-expr> | <while-expr> | <func-def>
+<expr> ::= VAR <identifier> <EQUALS> <expr> | <comp-expr> ((AND | OR) <comp-expr>)*
+<comp-expr> ::= NOT <comp-expr> | <arith-expr> ((<COMPARISON> | <LESS_THAN> | <GREATER_THAN> | <LESS_THAN_EQUALS> | <GREATER_THAN_EQUALS>) <arith-expr>)*
+<arith-expr> ::= <term> ((<PLUS> | <MINUS>) <term>)*
+<term> ::= <factor> ((<MUL> | <DIV>) <factor>)*
+<factor> ::= (<PLUS> | <MINUS>) <factor> | <power>
+<power> ::= <call> (<POWER> <factor>)*
+<call> ::= <atom> (<LEFT_PARENTHESIS> (<expr> (<COMMA> <expr>)*)? <RIGHT_PARENTHESIS>)?
+<atom> ::= <integer> | <float> | <string> | <identifier> | <LEFT_PARENTHESIS> <expr> <RIGHT_PARENTHESIS> | <list-expr> | <if-expr> | <for-expr> | <while-expr> | <func-def>
+<list-expr> ::= <LEFT_SQUARE> (<expr> (<COMMA> <expr>)*)? <RIGHT_SQUARE>
+<if-expr> ::= IF <expr> THEN (<expr> <if-expr-b> | <if-expr-c>?) | (<newline> <statements> END | <if-expr-b> | <if-expr-c>)
+<if-expr-b> ::= ELIF <expr> THEN (<expr> <if-expr-b> | <if-expr-c>?) | (<newline> <statements> END | <if-expr-b> | <if-expr-c>)
+<if-expr-c> ::= ELSE <expr> | (<newline> <statements> END)
+<for-expr> ::= FOR <identifier> <EQUALS> <expr> TO <expr> (STEP <expr>)? THEN <expr> | (<newline> <statements> END)
+<while-expr> ::= WHILE <expr> THEN <expr> | (<newline> <statements> END)
+<func-def> ::= FUNC <identifier>? <LEFT_PARENTHESIS> (<identifier> (<COMMA> <identifier>)*)? <RIGHT_PARENTHESIS> (<FUNCTION_ASSIGNMENT> <expr>) | (<newline> <statements> END)
+
+# Language definitions and syntax and Basic elements
+<list> ::= <LEFT_SQUARE>(<string>|<int>|<float>|<identifier>)*<RIGHT_SQUARE>
+<string> ::= <STRING>(<char>|<escape>)*<STRING>
+<keyword> ::= VAR | IF | THEN | ELIF | ELSE | FOR | TO | STEP | WHILE | FUNC | NOT | AND | OR | BLOCK
+<newline> ::= <BACKSLASHN>|<SEMICOLON>
+<BACKSLASHN> ::= \n
+<LESS_THAN_EQUALS> ::= <=
+<GREATER_THAN_EQUALS> ::= >=
+<COMPARISON> ::= ==
+<NOT_EQUALS> ::= !=
+<escape> ::= \(n|t)
+
+<float> ::= <integer>.<digit>*
+<int> ::= <digit>+
+<char> ::== <symbol>|<letter>|<digit>
+<digit> ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+<letter> ::= A | B | C | D | E | F | G | H | I | J | K | L | M
+         | N | O | P | Q | R | S | T | U | V | W | X | Y | Z
+         | a | b | c | d | e | f | g | h | i | j | k | l | m
+         | n | o | p | q | r | s | t | u | v | w | x | y | z
+<sybmol> ::=  { | } | ! | @ | # | $ | % | & | ? | : | ' | . | \ | _ |
+         | <space> | <POWER> | <MUL> | <LEFT_PARENTHESIS> | <RIGHT_PARENTHESIS> | <MINUS> | <PLUS> | <DIV>
+         | <EQUALS> | <LEFT_SQUARE> | <RIGHT_SQUARE> | <SEMICOLON> | <COMMA> | <LESS_THAN> | <GREATER_THAN>
+         | <FUNCTION_ASSIGNMENT> | <pipe> | <STRING>
+
+<LEFT_PARENTHESIS> ::= (
+<RIGHT_PARENTHESIS> ::= )
+<LEFT_SQUARE> ::= [
+<RIGHT_SQUARE> ::= ]
+<STRING> ::= "
+<COMMA> ::= ,
+<PLUS> ::= +
+<MINUS> ::= -
+<MUL> ::= *
+<DIV> ::= /
+<POWER> ::= ^
+<FUNCTION_ASSIGNMENT> ::= ~
+<SEMICOLON> ::= ;
+<LESS_THAN> ::= <
+<GREATER_THAN> ::= >
+<EQUALS> ::= =
+<pipe> ::= |
+<space> ::= " "
+
+# General Guidelines for reading
+postfix * means repeated 0 or more times
+postfix + means repeated 1 or more times
+postfix ? means 0 or 1 times

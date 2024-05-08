@@ -2,6 +2,7 @@ from enum import Enum
 
 KEYWORDS = ['VAR', 'AND', 'OR', 'NOT', 'IF', 'THEN', 'ELIF', 'ELSE', 'FOR', 'TO', 'STEP', 'WHILE', 'STRING', 'FUNC', 'BLOCK']
 
+
 class ArithmeticOperator(Enum):
     PLUS = '+'
     MINUS = '-'
@@ -51,7 +52,6 @@ class Punctuation(Enum):
     STRING = '"'
     SEMICOLON = ';'
     BACKSLASHN = '\n'
-
 
     def __str__(self):
         return self.name
