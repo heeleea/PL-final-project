@@ -12,3 +12,4 @@ class UnaryOperationNode(BasicPosition):
 
     def __repr__(self):
         return f"({self.operation}, {self.node})"
+

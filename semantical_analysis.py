@@ -24,7 +24,6 @@ from nodes.variable_access_node import VariableAccessNode
 from nodes.function_definition_node import FunctionDefinitionNode
 
 
-
 class Function(BaseFunction):
     def __init__(self, name, arg_names, body, should_return_null):
         super().__init__(name)
@@ -56,7 +55,6 @@ class Function(BaseFunction):
 
     def __repr__(self):
         return f"<function {self.name}>"
-
 
 
 class SemanticalAnalysis:
@@ -148,7 +146,6 @@ class SemanticalAnalysis:
         return validator.success(string)
 
     def transverse_error(self, node, context):
-        # TODO: raising an exception
         pass
 
     def transverse_if_node(self, node: IfNode, context):
@@ -193,7 +190,6 @@ class SemanticalAnalysis:
         if validator.error:
             return validator
 
-        # TODO: try implementing default step_value of 1
         if node.step:
             step_value = validator.register(self.transverse(node.step, context))
             if validator.error:
