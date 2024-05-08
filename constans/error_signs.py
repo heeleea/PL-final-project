@@ -2,6 +2,7 @@ from constans.token_names import ArithmeticOperator, Punctuation, Digit, InWords
 
 EXPECTED_IDENTIFIER =(InWords.IDENTIFIER.name)
 EXPECTED_END = (Utils.END.name)
+EXPECTED_BLOCK = (Punctuation.BLOCK.value)
 EXPECTED_EQUALS = (ComparisonOperator.EQUALS.value)
 EXPECTED_THEN = (InWords.THEN.name)
 EXPECTED_FOR = (InWords.FOR.name)

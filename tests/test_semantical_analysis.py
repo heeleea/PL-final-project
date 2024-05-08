@@ -195,3 +195,23 @@ def test_input_int_built_in_function(execution_context):
 
         assert isinstance(result.value, Number)
         assert str(result.value) == str(expected_output.value)
+
+
+@pytest.mark.parametrize("input,expected", [
+    ('VAR result = IF 5==5 THEN "math works" ELSE "no"', "math works"),
+])
+def test_while_loop(input, expected):
+    result, error = run(input, FILE_NAME)
+
+    print(result)
+    assert result.elements[0].value == expected
+
+
+@pytest.mark.parametrize("expression,value, expected", [
+    ('IF 5==5 THEN; PRINT("math"); PRINT("works") ELSE PRINT("broken")', 0 ,"math\nworks\n"),
+])
+def test_while_loop_with_prints(expression, value, expected, capfd):
+    result, _ = run(expression, FILE_NAME)
+    out, err = capfd.readouterr()
+    assert out == expected
+    assert result.elements[0].value == value

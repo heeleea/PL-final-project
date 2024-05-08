@@ -172,4 +172,3 @@ def test_expected_char_error(input, expected):
 
     assert isinstance(error, ExpectedCharError)
     assert error.details == expected
-

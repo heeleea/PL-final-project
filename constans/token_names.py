@@ -52,6 +52,7 @@ class Punctuation(Enum):
     STRING = '"'
     SEMICOLON = ';'
     BACKSLASHN = '\n'
+    BLOCK = 'BLOCK'
 
     def __str__(self):
         return self.name

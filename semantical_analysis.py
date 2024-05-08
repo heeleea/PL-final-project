@@ -163,7 +163,7 @@ class SemanticalAnalysis:
                 if validator.error:
                     return validator
 
-                result = Number.null if should_return_null else expression_value
+                result = NumberRunner.null if should_return_null else expression_value
                 return validator.success(result)
 
         if node.else_case:
@@ -173,10 +173,10 @@ class SemanticalAnalysis:
             if validator.error:
                 return validator
 
-            result = Number.null if should_return_null else else_value
+            result = NumberRunner.null if should_return_null else else_value
             return validator.success(result)
 
-        return validator.success(Number.null)
+        return validator.success(NumberRunner.null)
 
     def transverse_for_node(self, node: ForNode, context):
         validator = RuntimeValidator()
@@ -217,7 +217,7 @@ class SemanticalAnalysis:
         returned_list = List(elements)
         returned_list.set_context(context)
         returned_list.set_position(node.start_position, node.end_position)
-        result = Number.null if node.should_return_null else returned_list
+        result = NumberRunner.null if node.should_return_null else returned_list
         return validator.success(result)
 
     def transverse_while_node(self, node: WhileNode, context):

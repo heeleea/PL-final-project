@@ -19,7 +19,8 @@ from nodes.function_definition_node import FunctionDefinitionNode
 from constans.error_signs import EXPECTED_IDENTIFIER, CREATE_AST, ATOM_MAIN, EXPECTED_FOR, LIST_MAIN, \
     EXPECTED_EQUALS, EXPECTED_TO, EXPECTED_THEN, EXPECTED_END, EXPECTED_WHILE, EXPECTED_FUNC, LIST_EXPRESSION, \
     EXPECTED_START_PARENTHESIS, EXPECTED_COMMA_AND_END_PARENTHESIS, EXPECTED_CLOSE_PARENTHESIS, \
-    FUNC_DEFINITION_NEW_LINE, CALL_MAIN, EXPRESSION_MAIN, COMPARISON_EXPRESSIONS_MAIN, EXPECTED_LIST_CLOSERS
+    FUNC_DEFINITION_NEW_LINE, CALL_MAIN, EXPRESSION_MAIN, COMPARISON_EXPRESSIONS_MAIN, EXPECTED_LIST_CLOSERS, \
+    EXPECTED_BLOCK
 
 from constans.parsing_rules import NUMBER_TYPES, STRING_TYPES, LIST_STARTERS_NAMES, LIST_CLOSERS_NAMES, EXPRESSION_NAMES, EXPRESSION_STARTERS_NAMES, EXPRESSION_CLOSERS_NAMES, \
     IDENTIFIERS_NAMES, COMPARISON_EXPRESSION_NAMES, ADDITIVE_OPERATORS_NAMES, MULTIPLICATIVE_OPERATORS_NAMES, \
@@ -403,7 +404,7 @@ class Parser:
                 if validator.error:
                     error_message = error_message_generator(CALL_MAIN)
                     error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
-                    validator.failure(error)
+                    return validator.failure(error)
 
                 while self.current_token.type == Punctuation.COMMA.name:
                     validator.register_advancement()
@@ -418,7 +419,7 @@ class Parser:
                 if self.current_token.type not in EXPRESSION_CLOSERS_NAMES:
                     error_message = error_message_generator(EXPECTED_COMMA_AND_END_PARENTHESIS)
                     error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
-                    validator.failure(error)
+                    return validator.failure(error)
 
                 validator.register_advancement()
                 self.advance()
@@ -602,7 +603,7 @@ class Parser:
             if validator.error:
                 error_message = error_message_generator(LIST_EXPRESSION)
                 error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
-                validator.failure(error)
+                return validator.failure(error)
 
             while self.current_token.type == Punctuation.COMMA.name:
                 validator.register_advancement()
@@ -617,7 +618,7 @@ class Parser:
             if self.current_token.type not in LIST_CLOSERS_NAMES:
                 error_message = error_message_generator(LIST_MAIN)
                 error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
-                validator.failure(error)
+                return validator.failure(error)
 
             validator.register_advancement()
             self.advance()
@@ -722,12 +723,12 @@ class Parser:
 
                 else_case = (statements, True)
 
-                if self.current_token.matches(InWords.KEYWORDS.name, Utils.END.name):
+                if self.current_token.matches(InWords.KEYWORDS.name, Punctuation.BLOCK.value):
                     validator.register_advancement()
                     self.advance()
 
                 else:
-                    error_message = error_message_generator(EXPECTED_END)
+                    error_message = error_message_generator(EXPECTED_BLOCK)
                     error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
                     return validator.failure(error)
 
