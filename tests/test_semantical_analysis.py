@@ -177,7 +177,7 @@ def test_input_built_in_function(execution_context):
     test_input = "Hello, World!"
     expected_output = String(test_input)
 
-    with patch('built_ins.input', return_value=test_input):
+    with patch('builtins.input', return_value=test_input):
         input_function = BuiltInFunctions('input')
         result = input_function.execute_input(execution_context)
 
@@ -189,7 +189,7 @@ def test_input_int_built_in_function(execution_context):
     test_input = "6"
     expected_output = Number(6)
 
-    with patch('built_ins.input', return_value=test_input):
+    with patch('builtins.input', return_value=test_input):
         input_function = BuiltInFunctions("input_int")
         result = input_function.execute_input_int(execution_context)
 
