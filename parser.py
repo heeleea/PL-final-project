@@ -509,15 +509,13 @@ class Parser:
 
             statements.append(statement)
 
-        list_node = ListNode(statements)
-        list_node.set_position(start_position, self.current_token.end_position.get_copy())
-
+        list_node = ListNode(statements, start_position, self.current_token.end_position.get_copy())
         return validator.success(list_node)
 
     def expression(self):
         validator = ParserValidator()
 
-        if self.current_token.matches(InWords.KEYWORDS.name, InWords.VAR.value):
+        if self.current_token.matches(InWords.KEYWORDS.name, InWords.VAR.name):
             validator.register_advancement()
             self.advance()
 
@@ -623,8 +621,7 @@ class Parser:
             validator.register_advancement()
             self.advance()
 
-        list_node = ListNode(elements)
-        list_node.set_position(start_position, self.current_token.end_position)
+        list_node = ListNode(elements, start_position, self.current_token.end_position.get_copy())
         return validator.success(list_node)
 
     def if_expression(self):
@@ -634,7 +631,7 @@ class Parser:
             return validator
 
         cases, else_case = all_cases
-        if_node = IfNode(cases, else_case, True)
+        if_node = IfNode(cases, else_case)
 
         return validator.success(if_node)
 
