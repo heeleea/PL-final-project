@@ -1,12 +1,12 @@
-statements  : NEWLINE* expr (NEWLINE+ expr)* NEWLINE*
+statements  : NEWLINE* expression (NEWLINE+ expression)* NEWLINE*
 
-expr        : KEYWORD:VAR IDENTIFIER EQ expr
-            : comp-expr ((KEYWORD:AND|KEYWORD:OR) comp-expr)*
+expr        : KEYWORD:VAR IDENTIFIER EQALS expression
+            : comparison-expression ((KEYWORD:AND|KEYWORD:OR) comparison-expression)*
 
-comp-expr   : NOT comp-expr
-            : arith-expr ((EE|LT|GT|LTE|GTE) arith-expr)*
+comp-expr   : NOT comparison-expression
+            : arithmetic-expression ((COMPARISON|LESS_THAN|GREATER_THAN|LESS_THAN_EQUALS|GREATER_THAN_EQUALS) arithmetic-expression)*
 
-arith-expr  :	term ((PLUS|MINUS) term)*
+arith-expr  : term ((PLUS|MINUS) term)*
 
 term        : factor ((MUL|DIV) factor)*
 
@@ -15,7 +15,7 @@ factor      : (PLUS|MINUS) factor
 
 power       : call (POW factor)*
 
-call        : atom (LEFT_PARENTHESIS (exprssion (COMMA expression)*)? RIGHT_PARENTHESIS)?
+call        : atom (LEFT_PARENTHESIS (expression (COMMA expression)*)? RIGHT_PARENTHESIS)?
 
 atom        : INT|FLOAT|STRING|IDENTIFIER
             : LEFT_PARENTHESIS expression RIGHT_PARENTHESIS
@@ -39,7 +39,7 @@ if-expr-c   : KEYWORD:ELSE
               expression
             | (NEWLINE statements KEYWORD:BLOCK)
 LPAREN
-for-expr    : KEYWORD:FOR IDENTIFIER EQ expression KEYWORD:TO expression
+for-expr    : KEYWORD:FOR IDENTIFIER EQALS expression KEYWORD:TO expression
               (KEYWORD:STEP expression)? KEYWORD:THEN
               expr
             | (NEWLINE statements KEYWORD:BLOCK)
