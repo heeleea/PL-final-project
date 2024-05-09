@@ -57,7 +57,6 @@ class LexicalAnalysis:
                 new_line = self.create_end_of_line_token()
                 tokens.append(new_line)
 
-
             else:
                 function, token_type, enum_class = self.token_handlers_factory()
                 if function is not None:

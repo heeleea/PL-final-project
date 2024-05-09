@@ -425,7 +425,6 @@ class Parser:
                 self.advance()
 
             return validator.success(CallableNode(atom, arguments))
-
         return validator.success(atom)
 
     def power(self):
