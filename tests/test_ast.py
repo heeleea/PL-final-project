@@ -1,13 +1,25 @@
 import pytest
 
 from parser import Parser
-from context import Context
-from symbol_table import SymbolTable
+from entities.context import Context
+from entities.symbol_table import SymbolTable
 from tests.test_utils import FILE_NAME
 from lexical_analysis import LexicalAnalysis
 from semantical_analysis import SemanticalAnalysis, Number
-from token_utils import ArithmeticOperator, InWords, ComparisonOperator
-from ast_nodes import NumberNode, BinaryOperationNode, UnaryOperationNode, VariableAssignNode, IfNode, ForNode, WhileNode, VariableAccessNode, FunctionDefinitionNode, CallableNode, StringNode, ListNode
+from constans.token_names import ArithmeticOperator, InWords, ComparisonOperator
+
+from nodes.number_node import NumberNode
+from nodes.binary_operation_node import BinaryOperationNode
+from nodes.unary_operation_node import UnaryOperationNode
+from nodes.variable_assign_node import VariableAssignNode
+from nodes.if_node import IfNode
+from nodes.for_node import ForNode
+from nodes.while_node import WhileNode
+from nodes.variable_access_node import VariableAccessNode
+from nodes.function_definition_node import FunctionDefinitionNode
+from nodes.call_node import CallableNode
+from nodes.string_node import StringNode
+from nodes.list_node import ListNode
 
 
 def test_number_node_creation():

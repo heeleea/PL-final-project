@@ -3,7 +3,8 @@ import pytest
 from tests.test_utils import FILE_NAME
 from lexical_analysis import LexicalAnalysis
 from error import IllegalCharError, ExpectedCharError
-from token_utils import Digit, ArithmeticOperator, Utils, ComparisonOperator, InWords, Punctuation, Token
+from constans.token_names import Digit, ArithmeticOperator, Utils, ComparisonOperator, InWords, Punctuation
+from entities.token import Token
 
 
 @pytest.mark.parametrize('input,expected', [
@@ -171,4 +172,3 @@ def test_expected_char_error(input, expected):
 
     assert isinstance(error, ExpectedCharError)
     assert error.details == expected
-

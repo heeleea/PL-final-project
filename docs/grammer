@@ -1,0 +1,54 @@
+statements  : NEWLINE* expression (NEWLINE+ expression)* NEWLINE*
+
+expr        : KEYWORD:VAR IDENTIFIER EQALS expression
+            : comparison-expression ((KEYWORD:AND|KEYWORD:OR) comparison-expression)*
+
+comp-expr   : NOT comparison-expression
+            : arithmetic-expression ((COMPARISON|LESS_THAN|GREATER_THAN|LESS_THAN_EQUALS|GREATER_THAN_EQUALS) arithmetic-expression)*
+
+arith-expr  : term ((PLUS|MINUS) term)*
+
+term        : factor ((MUL|DIV) factor)*
+
+factor      : (PLUS|MINUS) factor
+            : power
+
+power       : call (POW factor)*
+
+call        : atom (LEFT_PARENTHESIS (expression (COMMA expression)*)? RIGHT_PARENTHESIS)?
+
+atom        : INT|FLOAT|STRING|IDENTIFIER
+            : LEFT_PARENTHESIS expression RIGHT_PARENTHESIS
+            : list-expression
+            : if-expression
+            : for-expression
+            : while-expression
+            : function-definition
+
+list-expr   : LEFT_SQUARE (expression (COMMA expression)*)? RIGHT_SQUARE
+
+if-expr     : KEYWORD:IF expression KEYWORD:THEN
+              (expr if-expression-b|if-expression-c?)
+            | (NEWLINE statements KEYWORD:END|if-expression-b|if-expression-c)
+
+if-expr-b   : KEYWORD:ELIF expression KEYWORD:THEN
+              (expr if-expression-b|if-expression-c?)
+            | (NEWLINE statements KEYWORD:END|if-expr-b|if-expr-c)
+
+if-expr-c   : KEYWORD:ELSE
+              expression
+            | (NEWLINE statements KEYWORD:BLOCK)
+LPAREN
+for-expr    : KEYWORD:FOR IDENTIFIER EQALS expression KEYWORD:TO expression
+              (KEYWORD:STEP expression)? KEYWORD:THEN
+              expr
+            | (NEWLINE statements KEYWORD:BLOCK)
+
+while-expr  : KEYWORD:WHILE expression KEYWORD:THEN
+              expr
+            | (NEWLINE statements KEYWORD:BLOCK)
+
+func-def    : KEYWORD:FUNC IDENTIFIER?
+              LEFT_PARENTHESIS (IDENTIFIER (COMMA IDENTIFIER)*)? RIGHT_PARENTHESIS
+              (FUNCTION_ASSIGNMENT expression)
+            | (NEWLINE statements KEYWORD:BLOCK)

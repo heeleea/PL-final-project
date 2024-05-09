@@ -1,5 +1,7 @@
-from error import Position, IllegalCharError, ExpectedCharError
-from token_utils import Token, Digit, Punctuation, ArithmeticOperator, Utils, InWords, KEYWORDS, ComparisonOperator, OperatorPrefix
+from entities.token import Token
+from entities.position import Position
+from error import IllegalCharError, ExpectedCharError
+from constans.token_names import Digit, Punctuation, ArithmeticOperator, Utils, InWords, KEYWORDS, ComparisonOperator, OperatorPrefix
 
 
 OPERATOR_PREFIXES = [operator.value for operator in OperatorPrefix.__members__.values()]
@@ -54,7 +56,6 @@ class LexicalAnalysis:
             elif self.current_char == Punctuation.SEMICOLON.value:
                 new_line = self.create_end_of_line_token()
                 tokens.append(new_line)
-
 
             else:
                 function, token_type, enum_class = self.token_handlers_factory()

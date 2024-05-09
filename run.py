@@ -1,8 +1,10 @@
 from parser import Parser
-from context import Context
+from entities.context import Context
 from lexical_analysis import LexicalAnalysis
-from semantical_analysis import SemanticalAnalysis, NumberRunner, BuiltInFunctionRunner
-from symbol_table import SymbolTable
+from semantical_analysis import SemanticalAnalysis
+from built_ins.variables import NumberRunner
+from built_ins.functions import BuiltInFunctionRunner
+from entities.symbol_table import SymbolTable
 
 
 global_symbol_table = SymbolTable()

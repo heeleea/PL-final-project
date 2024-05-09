@@ -3,14 +3,14 @@ import math
 import pytest
 from unittest.mock import patch
 
-from semantical_analysis import Number, List
-from symbol_table import SymbolTable
+from entities.number import Number
+from entities.list import List
+from entities.symbol_table import SymbolTable
 from test_utils import FILE_NAME
 from run import run
-
-from context import Context
-
-from semantical_analysis import String, BuiltInFunctions
+from entities.context import Context
+from entities.string import String
+from entities.built_in_functions import BuiltInFunctions
 
 
 @pytest.fixture
@@ -111,7 +111,7 @@ def test_loop_with_list():
 
     for i in range(len(elements)):
         assert isinstance(elements[i], Number)
-        assert elements[i].value == pow(2, i+1)
+        assert elements[i].value == pow(2, i + 1)
 
 
 @pytest.mark.parametrize("expression,expected", [
@@ -195,3 +195,30 @@ def test_input_int_built_in_function(execution_context):
 
         assert isinstance(result.value, Number)
         assert str(result.value) == str(expected_output.value)
+
+
+@pytest.mark.parametrize("input,expected", [
+    ('VAR result = IF 5==5 THEN "math works" ELSE "no"', "math works"),
+])
+def test_while_loop(input, expected):
+    result, error = run(input, FILE_NAME)
+
+    print(result)
+    assert result.elements[0].value == expected
+
+
+@pytest.mark.parametrize("expression,value, expected", [
+    ('IF 5==5 THEN; PRINT("math"); PRINT("works") ELSE PRINT("broken")', 0, "math\nworks\n"),
+])
+def test_while_loop_with_prints(expression, value, expected, capfd):
+    result, _ = run(expression, FILE_NAME)
+    out, err = capfd.readouterr()
+    assert out == expected
+    assert result.elements[0].value == value
+
+
+INPUT = '''IF 5==5 THEN\n\tVAR a = "Math works"\nELSE\n\tVAR a = "Math is broken"\nBLOCK'''
+def test_multiline(capfd):
+    result, error = run(INPUT, FILE_NAME)
+    out, err = capfd.readouterr()
+    print(out)
