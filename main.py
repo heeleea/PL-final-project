@@ -1,20 +1,14 @@
-from run import run
-from semantical_analysis import List
+from run import execute, print_result, get_multiline_input
+
+print("Enter your code (press Enter on an empty line to finish):")
 
 while True:
-    text = input("> ")
+    text = get_multiline_input()
     if text.strip() == "":
         continue
-    result, error = run(text, file_name='<stdin>')
 
+    result, error = execute(text, file_name='<stdin>')
     if error:
         print(error.to_string())
     elif result:
-        if isinstance(result, List):
-            if len(result.elements) == 1:
-                print(repr(result.elements[0]))
-            else:
-                print(repr(result.elements))
-        else:
-            print(result.value)
-
+        print_result(result)

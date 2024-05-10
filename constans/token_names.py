@@ -52,7 +52,10 @@ class Punctuation(Enum):
     STRING = '"'
     SEMICOLON = ';'
     BACKSLASHN = '\n'
+    TAB = '\t'
+    END = 'END'
     BLOCK = 'BLOCK'
+
 
     def __str__(self):
         return self.name
@@ -85,4 +88,4 @@ class InWords(Enum):
 
 
 class Utils(Enum):
-    END = 'END'
+    EOF = 'EOF'

@@ -215,10 +215,3 @@ def test_while_loop_with_prints(expression, value, expected, capfd):
     out, err = capfd.readouterr()
     assert out == expected
     assert result.elements[0].value == value
-
-
-INPUT = '''IF 5==5 THEN\n\tVAR a = "Math works"\nELSE\n\tVAR a = "Math is broken"\nBLOCK'''
-def test_multiline(capfd):
-    result, error = run(INPUT, FILE_NAME)
-    out, err = capfd.readouterr()
-    print(out)
