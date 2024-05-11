@@ -25,7 +25,7 @@ from nodes.function_definition_node import FunctionDefinitionNode
 
 
 class Function(BaseFunction):
-    def __init__(self, name, arg_names, body, should_return_null):
+    def __init__(self, name, body, arg_names, should_return_null):
         super().__init__(name)
         self.arg_names = arg_names
         self.body = body

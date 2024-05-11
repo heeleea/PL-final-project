@@ -3,7 +3,6 @@ import pytest
 from parser import Parser
 from entities.context import Context
 from entities.symbol_table import SymbolTable
-from tests.test_utils import FILE_NAME
 from lexical_analysis import LexicalAnalysis
 from semantical_analysis import SemanticalAnalysis, Number
 from constans.token_names import ArithmeticOperator, InWords, ComparisonOperator
@@ -20,6 +19,8 @@ from nodes.function_definition_node import FunctionDefinitionNode
 from nodes.call_node import CallableNode
 from nodes.string_node import StringNode
 from nodes.list_node import ListNode
+
+FILE_NAME = '<test>'
 
 
 def test_number_node_creation():

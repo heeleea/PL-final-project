@@ -3,7 +3,7 @@ from entities.position import Position
 from error import IllegalCharError, ExpectedCharError
 from constans.token_names import Digit, Punctuation, ArithmeticOperator, Utils, InWords, KEYWORDS, ComparisonOperator, OperatorPrefix
 
-
+SPACING = [Punctuation.TAB.value, Punctuation.BACKSLASHN.value]
 OPERATOR_PREFIXES = [operator.value for operator in OperatorPrefix.__members__.values()]
 
 
@@ -23,8 +23,9 @@ class LexicalAnalysis:
         tokens = []
 
         while self.current_char is not None:
+
             if self.current_char.isspace():
-                if self.current_char == Punctuation.BACKSLASHN.value:
+                if self.current_char in SPACING:
                     new_line = self.create_end_of_line_token()
                     tokens.append(new_line)
 
@@ -75,7 +76,7 @@ class LexicalAnalysis:
 
                     return [], IllegalCharError(details=f"'{char}'", start_position=start_position, end_position=self.char_position)
 
-        token = Token(token_type=Utils.END.name, start_position=self.char_position)
+        token = Token(token_type=Utils.EOF.name, start_position=self.char_position)
         tokens.append(token)
         return tokens, None
 
@@ -257,11 +258,12 @@ class LexicalAnalysis:
         return token
 
     def create_end_of_line_token(self):
-        token_type = InWords.NEWLINE
         start_position = self.char_position.get_copy()
-        self.proceed()
 
-        token = Token(token_type=token_type.name,
+        while self.current_char in SPACING or self.current_char == Punctuation.SEMICOLON.value:
+            self.proceed()
+
+        token = Token(token_type=InWords.NEWLINE.name,
                       start_position=start_position,
                       end_position=self.char_position)
         return token

@@ -1,10 +1,11 @@
 import pytest
 
-from tests.test_utils import FILE_NAME
 from lexical_analysis import LexicalAnalysis
 from error import IllegalCharError, ExpectedCharError
 from constans.token_names import Digit, ArithmeticOperator, Utils, ComparisonOperator, InWords, Punctuation
 from entities.token import Token
+
+FILE_NAME = '<test>'
 
 
 @pytest.mark.parametrize('input,expected', [
@@ -16,7 +17,7 @@ def test_number_types(input, expected):
     tokens, error = lexer.create_token_stream()
 
     assert tokens[0].type == expected
-    assert tokens[1].type == Utils.END.name
+    assert tokens[1].type == Utils.EOF.name
 
 
 @pytest.mark.parametrize('input,expected', [
@@ -42,7 +43,7 @@ def test_arithmetic_operators(input, expected):
     tokens, error = lexer.create_token_stream()
 
     assert tokens[0].type == expected
-    assert tokens[1].type == Utils.END.name
+    assert tokens[1].type == Utils.EOF.name
 
 
 @pytest.mark.parametrize('input,expected', [
@@ -59,7 +60,7 @@ def test_arithmetic_operators(input, expected):
     tokens, error = lexer.create_token_stream()
 
     assert tokens[0].type == expected
-    assert tokens[1].type == Utils.END.name
+    assert tokens[1].type == Utils.EOF.name
 
 
 @pytest.mark.parametrize('input,expected', [
@@ -73,7 +74,7 @@ def test_logic_operators(input, expected):
 
     assert tokens[0].type == InWords.KEYWORDS.name
     assert tokens[0].value == expected
-    assert tokens[1].type == Utils.END.name
+    assert tokens[1].type == Utils.EOF.name
 
 
 @pytest.mark.parametrize('input,expected', [
@@ -94,7 +95,7 @@ def test_detect_inwords(input, expected):
 
     assert tokens[0].type == InWords.KEYWORDS.name
     assert tokens[0].value == expected
-    assert tokens[1].type == Utils.END.name
+    assert tokens[1].type == Utils.EOF.name
 
 
 @pytest.mark.parametrize('input,expected', [
@@ -111,24 +112,24 @@ def test_detect_punctuation(input, expected):
     tokens, error = lexer.create_token_stream()
 
     assert tokens[0].type == expected
-    assert tokens[1].type == Utils.END.name
+    assert tokens[1].type == Utils.EOF.name
 
 
 @pytest.mark.parametrize('text,length,expected', [
-    ('1+3', 4, [(1, Digit.INT.name), (None, ArithmeticOperator.PLUS.name), (3, Digit.INT.name), (None, Utils.END.name)]),
-    ('1/0', 4, [(1, Digit.INT.name), (None, ArithmeticOperator.DIVIDE.name), (0, Digit.INT.name), (None, Utils.END.name)]),
-    ('-1*2', 5, [(None, ArithmeticOperator.MINUS.name), (1, Digit.INT.name), (None, ArithmeticOperator.MULTIPLY.name), (2, Digit.INT.name), (None, Utils.END.name)]),
-    ('2*-1', 5, [(2, Digit.INT.name), (None, ArithmeticOperator.MULTIPLY.name), (None, ArithmeticOperator.MINUS.name), (1, Digit.INT.name), (None, Utils.END.name)]),
-    ('9/3', 4, [(9, Digit.INT.name), (None, ArithmeticOperator.DIVIDE.name), (3, Digit.INT.name), (None, Utils.END.name)]),
-    ('0+2', 4, [(0, Digit.INT.name), (None, ArithmeticOperator.PLUS.name), (2, Digit.INT.name), (None, Utils.END.name)]),
-    ('10+1', 4, [(10, Digit.INT.name), (None, ArithmeticOperator.PLUS.name), (1, Digit.INT.name),  (None, Utils.END.name)]),
-    ('VAR a = 5', 5,  [(InWords.VAR.name, InWords.KEYWORDS.name), ('a', InWords.IDENTIFIER.name), (None, ArithmeticOperator.EQUALS.name), (5, Digit.INT.name), (None, Utils.END.name)]),
-    ('VAR b = 7', 4, [(InWords.VAR.name, InWords.KEYWORDS.name), ('b', InWords.IDENTIFIER.name), (None, ArithmeticOperator.EQUALS.name), (7, Digit.INT.name), (None, Utils.END.name)]),
+    ('1+3', 4, [(1, Digit.INT.name), (None, ArithmeticOperator.PLUS.name), (3, Digit.INT.name), (None, Utils.EOF.name)]),
+    ('1/0', 4, [(1, Digit.INT.name), (None, ArithmeticOperator.DIVIDE.name), (0, Digit.INT.name), (None, Utils.EOF.name)]),
+    ('-1*2', 5, [(None, ArithmeticOperator.MINUS.name), (1, Digit.INT.name), (None, ArithmeticOperator.MULTIPLY.name), (2, Digit.INT.name), (None, Utils.EOF.name)]),
+    ('2*-1', 5, [(2, Digit.INT.name), (None, ArithmeticOperator.MULTIPLY.name), (None, ArithmeticOperator.MINUS.name), (1, Digit.INT.name), (None, Utils.EOF.name)]),
+    ('9/3', 4, [(9, Digit.INT.name), (None, ArithmeticOperator.DIVIDE.name), (3, Digit.INT.name), (None, Utils.EOF.name)]),
+    ('0+2', 4, [(0, Digit.INT.name), (None, ArithmeticOperator.PLUS.name), (2, Digit.INT.name), (None, Utils.EOF.name)]),
+    ('10+1', 4, [(10, Digit.INT.name), (None, ArithmeticOperator.PLUS.name), (1, Digit.INT.name), (None, Utils.EOF.name)]),
+    ('VAR a = 5', 5,  [(InWords.VAR.name, InWords.KEYWORDS.name), ('a', InWords.IDENTIFIER.name), (None, ArithmeticOperator.EQUALS.name), (5, Digit.INT.name), (None, Utils.EOF.name)]),
+    ('VAR b = 7', 4, [(InWords.VAR.name, InWords.KEYWORDS.name), ('b', InWords.IDENTIFIER.name), (None, ArithmeticOperator.EQUALS.name), (7, Digit.INT.name), (None, Utils.EOF.name)]),
     ('FUNC add(a,b) ~ a + b', 12, [(InWords.FUNC.value, InWords.KEYWORDS.name), ('add', InWords.IDENTIFIER.name), (None, Punctuation.LEFT_PARENTHESIS.name),
                                    ('a', InWords.IDENTIFIER.name), (None, Punctuation.COMMA.name), ('b', InWords.IDENTIFIER.name), (None, Punctuation.RIGHT_PARENTHESIS.name),
-                                   (None, Punctuation.FUNCTION_ASSIGNMENT.name), ('a', InWords.IDENTIFIER.name), (None, ArithmeticOperator.PLUS.name), ('b', InWords.IDENTIFIER.name), (None, Utils.END.name)]),
-    ('[]', 3, [(None, Punctuation.LEFT_SQUARE.name), (None, Punctuation.RIGHT_SQUARE.name), (None, Utils.END.name)]),
-    ('[1,2,3]', 8, [(None, Punctuation.LEFT_SQUARE.name), (1, Digit.INT.name), (None, Punctuation.COMMA.name), (2, Digit.INT.name), (None, Punctuation.COMMA.name), (3, Digit.INT.name), (None, Punctuation.RIGHT_SQUARE.name), (None, Utils.END.name)])
+                                   (None, Punctuation.FUNCTION_ASSIGNMENT.name), ('a', InWords.IDENTIFIER.name), (None, ArithmeticOperator.PLUS.name), ('b', InWords.IDENTIFIER.name), (None, Utils.EOF.name)]),
+    ('[]', 3, [(None, Punctuation.LEFT_SQUARE.name), (None, Punctuation.RIGHT_SQUARE.name), (None, Utils.EOF.name)]),
+    ('[1,2,3]', 8, [(None, Punctuation.LEFT_SQUARE.name), (1, Digit.INT.name), (None, Punctuation.COMMA.name), (2, Digit.INT.name), (None, Punctuation.COMMA.name), (3, Digit.INT.name), (None, Punctuation.RIGHT_SQUARE.name), (None, Utils.EOF.name)])
 ])
 def test_create_token_stream(text, length, expected):
     lexer = LexicalAnalysis(text, FILE_NAME)

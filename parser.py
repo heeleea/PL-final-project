@@ -50,7 +50,7 @@ class Parser:
     def create_ast(self):
         result = self.statements()
 
-        if not result.error and self.current_token.type != Utils.END.name:
+        if not result.error and self.current_token.type != Utils.EOF.name:
             error_message = error_message_generator(CREATE_AST)
             error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
             return result.failure(error)
@@ -212,7 +212,11 @@ class Parser:
             if validator.error:
                 return validator
 
-            if not self.current_token.matches(InWords.KEYWORDS.name, Punctuation.BLOCK.name):
+            if self.current_token.type == InWords.NEWLINE.name:
+                validator.register_advancement()
+                self.advance()
+
+            if not self.current_token.matches(InWords.KEYWORDS.name, Punctuation.END.name):
                 error_message = error_message_generator(EXPECTED_END)
                 error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
                 return validator.failure(error)
@@ -262,7 +266,11 @@ class Parser:
             if validator.error:
                 return validator
 
-            if not self.current_token.matches(InWords.KEYWORDS.name, Utils.END.name):
+            if self.current_token.type == InWords.NEWLINE.name:
+                validator.register_advancement()
+                self.advance()
+
+            if not self.current_token.matches(InWords.KEYWORDS.name, Utils.EOF.name):
                 error_message = error_message_generator(EXPECTED_END)
                 error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
                 return validator.failure(error)
@@ -369,7 +377,7 @@ class Parser:
         if validator.error:
             return validator
 
-        if self.current_token.matches(InWords.KEYWORDS.name, Utils.END.name):
+        if self.current_token.matches(InWords.KEYWORDS.name, Utils.EOF.name):
             error_message = error_message_generator(EXPECTED_END)
             error = InvalidSyntaxError(error_message, self.current_token.start_position, self.current_token.end_position)
             validator.failure(error)
@@ -670,7 +678,11 @@ class Parser:
 
             cases.append((condition, statements, True))
 
-            if self.current_token.matches(InWords.KEYWORDS.name, Punctuation.BLOCK.name):
+            if self.current_token.type == InWords.NEWLINE.name:
+                validator.register_advancement()
+                self.advance()
+
+            if self.current_token.matches(InWords.KEYWORDS.name, Punctuation.END.name):
                 validator.register_advancement()
                 self.advance()
 
@@ -682,6 +694,10 @@ class Parser:
                 new_cases, else_case = all_cases
                 cases.extend(new_cases)
 
+                if self.current_token.type == InWords.NEWLINE.name:
+                    validator.register_advancement()
+                    self.advance()
+
         else:
             expression = validator.register(self.expression())
             if validator.error:
@@ -689,12 +705,20 @@ class Parser:
 
             cases.append((condition, expression, False))
 
+            if self.current_token.type == InWords.NEWLINE.name:
+                validator.register_advancement()
+                self.advance()
+
             all_cases = validator.register(self.if_expression_b_or_c())
             if validator.error:
                 return validator
 
             new_cases, else_case = all_cases
             cases.extend(new_cases)
+
+            if self.current_token.type == InWords.NEWLINE.name:
+                validator.register_advancement()
+                self.advance()
 
         return validator.success((cases, else_case))
 
@@ -719,7 +743,7 @@ class Parser:
 
                 else_case = (statements, True)
 
-                if self.current_token.matches(InWords.KEYWORDS.name, Punctuation.BLOCK.value):
+                if self.current_token.matches(InWords.KEYWORDS.name, Punctuation.END.value):
                     validator.register_advancement()
                     self.advance()
 
@@ -735,6 +759,10 @@ class Parser:
 
                 else_case = (expression, False)
 
+                if self.current_token.type == InWords.NEWLINE.name:
+                    validator.register_advancement()
+                    self.advance()
+
         return validator.success(else_case)
 
     def if_expression_b_or_c(self):
@@ -747,10 +775,18 @@ class Parser:
                 return validator
             cases, else_case = all_cases
 
+            if self.current_token.type == InWords.NEWLINE.name:
+                validator.register_advancement()
+                self.advance()
+
         else:
             else_case = validator.register(self.if_expression_c())
             if validator.error:
                 return validator
+
+            if self.current_token.type == InWords.NEWLINE.name:
+                validator.register_advancement()
+                self.advance()
 
         return validator.success((cases, else_case))
 
