@@ -1,27 +1,21 @@
-
 IF 5==5 THEN PRINT("if statement example")
 ELSE PRINT("code not working")
 BLOCK
-
 IF 5!=5 THEN PRINT("code not working")
 ELIF 4==4 THEN PRINT("elif statement example")
 ELSE PRINT("code not working")
 BLOCK
-
 IF 5>=6 THEN PRINT("code not working")
 ELSE PRINT("else statement example")
 BLOCK
-
 VAR x=10
 VAR y=20.05
 IF x>y THEN PRINT("x is bigger") ELSE PRINT("y is bigger")
 BLOCK
-
 VAR i=0
 BLOCK
 WHILE i<10 THEN VAR i=i+1
 BLOCK
-
 VAR j = 0
 BLOCK
 VAR result = 0
@@ -30,30 +24,28 @@ FOR j = 0 TO 9 THEN VAR result = result + 5
 BLOCK
 FOR j = 10 TO 0 STEP -2 THEN VAR result = result / 2
 BLOCK
-
-#TODO: nested loops
-
+FOR i = 0 TO 5 THEN FOR j = 0 TO 5 THEN VAR res = res + 1
+BLOCK
 TRUE
 BLOCK
 FALSE
 BLOCK
 NULL
 BLOCK
-
 (3*(4+4)-6)/2 ; 8^2-(-3)
 BLOCK
-
 TRUE AND FALSE;FALSE AND FALSE;TRUE AND TRUE;TRUE OR FALSE;TRUE OR TRUE;FALSE OR FALSE;NOT FALSE;NOT TRUE
 BLOCK
-
 VAR string1 = "Hello "
 VAR string2 = "World"
 VAR string3 = string1+string2
 VAR string4 = "Repeat "
 VAR string5 = string4 * 8
 BLOCK
-
 VAR list1 = [1,2,3]
+BLOCK
+IS_LIST(list1)
+IS_LIST(7)
 BLOCK
 VAR list2 = [4,5,6]
 BLOCK
@@ -67,14 +59,13 @@ VAR list3 = list3 - -2
 BLOCK
 VAR list2 = list2 / 1
 BLOCK
-
 MATH_PI
 IS_NUM(9)
-#TODO: IS_NUM($), IS_LIST not working
+IS_NUM("$")
+#TODO: IS_NUM($) wont work, the function can only take numbers, variables or double quoted signs/letters
 IS_STR("hey")
 IS_STR(5)
 BLOCK
-
 VAR list = [0,1,2,3]
 BLOCK
 APPEND(list,4)
@@ -89,12 +80,16 @@ EXTEND(list,[8,7,10])
 BLOCK
 list
 BLOCK
-
 VAR returned = PRINT_RETURN("hey")
 BLOCK
 returned
 BLOCK
-
-FUNC add(num1,num2) ~ num1*num2
-#TODO: use the function.
-#TODO: implementing INPUT/INPUT_INT, not working in multiline.
+FUNC add(num1,num2) ~ num1 * num2
+#add(4,7)
+#TODO: using the functions wont work, len() gets a type error.
+BLOCK
+PRINT("enter a number to define x")
+BLOCK
+VAR x = INPUT_INT()
+VAR i = x*4
+BLOCK
