@@ -1,10 +1,11 @@
 import pytest
 
-from tests.test_utils import FILE_NAME
 from lexical_analysis import LexicalAnalysis
 from error import IllegalCharError, ExpectedCharError
 from constans.token_names import Digit, ArithmeticOperator, Utils, ComparisonOperator, InWords, Punctuation
 from entities.token import Token
+
+FILE_NAME = '<test>'
 
 
 @pytest.mark.parametrize('input,expected', [

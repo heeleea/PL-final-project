@@ -24,13 +24,8 @@ FOR j = 0 TO 9 THEN VAR result = result + 5
 BLOCK
 FOR j = 10 TO 0 STEP -2 THEN VAR result = result / 2
 BLOCK
+VAR res = 0
 FOR i = 0 TO 5 THEN FOR j = 0 TO 5 THEN VAR res = res + 1
-BLOCK
-TRUE
-BLOCK
-FALSE
-BLOCK
-NULL
 BLOCK
 (3*(4+4)-6)/2 ; 8^2-(-3)
 BLOCK
@@ -62,7 +57,6 @@ BLOCK
 MATH_PI
 IS_NUM(9)
 IS_NUM("$")
-#TODO: IS_NUM($) wont work, the function can only take numbers, variables or double quoted signs/letters
 IS_STR("hey")
 IS_STR(5)
 BLOCK
@@ -85,8 +79,7 @@ BLOCK
 returned
 BLOCK
 FUNC add(num1,num2) ~ num1 * num2
-#add(4,7)
-#TODO: using the functions wont work, len() gets a type error.
+add(4,7)
 BLOCK
 PRINT("enter a number to define x")
 BLOCK

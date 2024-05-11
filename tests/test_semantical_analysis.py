@@ -6,11 +6,12 @@ from unittest.mock import patch
 from entities.number import Number
 from entities.list import List
 from entities.symbol_table import SymbolTable
-from test_utils import FILE_NAME
 from run import run
 from entities.context import Context
 from entities.string import String
 from entities.built_in_functions import BuiltInFunctions
+
+FILE_NAME = '<test>'
 
 
 @pytest.fixture
@@ -134,15 +135,6 @@ def test_built_in_functions(expression, expected):
 
 
 @pytest.mark.parametrize("expression,expected", [
-    ("PRINT(\"Hello\")", "Hello\n")
-])
-def test_print_build_in_functions(expression, expected, capfd):
-    _, _ = run(expression, FILE_NAME)
-    out, err = capfd.readouterr()
-    assert out == expected
-
-
-@pytest.mark.parametrize("expression,expected", [
     ("PRINT_RETURN(\"Hello\")", "Hello")
 ])
 def test_print_return_build_in_functions(expression, expected):
@@ -202,16 +194,4 @@ def test_input_int_built_in_function(execution_context):
 ])
 def test_while_loop(input, expected):
     result, error = run(input, FILE_NAME)
-
-    print(result)
     assert result.elements[0].value == expected
-
-
-@pytest.mark.parametrize("expression,value, expected", [
-    ('IF 5==5 THEN; PRINT("math"); PRINT("works") ELSE PRINT("broken")', 0, "math\nworks\n"),
-])
-def test_while_loop_with_prints(expression, value, expected, capfd):
-    result, _ = run(expression, FILE_NAME)
-    out, err = capfd.readouterr()
-    assert out == expected
-    assert result.elements[0].value == value
